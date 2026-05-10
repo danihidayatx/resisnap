@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResiSnap - Shopee Thermal Printer Tool</title>
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Browser Support Warning -->
+        <div id="browser-warning" class="warning-banner" hidden>
+            ResiSnap works best on Chrome or Edge. Your current browser might not support direct printing (WebUSB).
+        </div>
+
+        <!-- Top Bar -->
+        <header class="top-bar">
+            <div class="logo">
+                <i data-lucide="printer"></i>
+                <span>ResiSnap</span>
+            </div>
+            <div class="actions">
+                <div class="status-indicator">
+                    <span id="printer-status-dot" class="dot"></span>
+                    <span id="printer-status-text">Printer Disconnected</span>
+                </div>
+                <button id="connect-printer" class="btn btn-outline">
+                    <i data-lucide="usb"></i>
+                    Connect Printer
+                </button>
+                <label for="file-upload" class="btn btn-primary">
+                    <i data-lucide="file-up"></i>
+                    Upload PDF
+                    <input type="file" id="file-upload" accept="application/pdf" hidden>
+                </label>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Large Preview -->
+            <div class="preview-container">
+                <div id="canvas-wrapper" class="preview-canvas-wrapper">
+                    <!-- Canvas will be inserted here -->
+                    <div id="drop-zone" style="padding: 4rem; border: 2px dashed var(--border); border-radius: var(--radius); text-align: center; color: var(--text-muted);">
+                        <i data-lucide="file-text" style="width: 48px; height: 48px; margin-bottom: 1rem;"></i>
+                        <p>Upload a Shopee PDF to get started</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page Selection Sidebar -->
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    Pages (<span id="page-count">0</span>)
+                </div>
+                <div id="thumbnail-strip" class="thumbnail-strip">
+                    <!-- Thumbnails will be inserted here -->
+                </div>
+            </aside>
+        </main>
+
+        <!-- Control Panel -->
+        <section class="control-panel">
+            <div class="control-group">
+                <button id="rotate-btn" class="btn btn-outline btn-icon" title="Rotate 90° Clockwise">
+                    <i data-lucide="rotate-cw"></i>
+                </button>
+                <div class="toggle-group">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="grayscale-toggle" checked>
+                        <span class="toggle-text">B&W</span>
+                    </label>
+                </div>
+                <div class="slider-group">
+                    <label>Brightness <span id="brightness-val">0</span></label>
+                    <input type="range" id="brightness" min="-100" max="100" value="0">
+                </div>
+                <div class="slider-group">
+                    <label>Contrast <span id="contrast-val">0</span></label>
+                    <input type="range" id="contrast" min="-100" max="100" value="0">
+                </div>
+            </div>
+
+            <div class="control-group" style="margin-left: auto;">
+                <button id="download-pdf" class="btn btn-outline" disabled>
+                    <i data-lucide="download"></i>
+                    Download PDF
+                </button>
+                <button id="print-current" class="btn btn-outline" disabled>
+                    <i data-lucide="printer"></i>
+                    Print Current
+                </button>
+                <button id="print-all" class="btn btn-primary" disabled>
+                    <i data-lucide="printer"></i>
+                    Print All
+                </button>
+            </div>
+        </section>
+    </div>
+
+    <script type="module" src="./src/main.js"></script>
+</body>
+</html>
