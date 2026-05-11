@@ -2,11 +2,15 @@ import { createIcons, Printer, Usb, FileUp, RotateCw, FileText, Download, CheckC
 import { PdfRenderer } from './pdf-renderer';
 import { CropManager } from './cropper';
 import { ImageProcessor } from './image-proc';
-import { EscPosBuilder } from './escpos';
 import { UsbPrinter } from './usb-printer';
 import { Toast } from './toast';
-import { jsPDF } from 'jspdf';
 import JsBarcode from 'jsbarcode';
+
+// New modules
+import { BarcodeDetectorUtil } from './barcode-detector';
+import { rotateCanvas } from './canvas-utils';
+import { loadAllPages, downloadCroppedPdf } from './pdf-handler';
+import { printPages } from './print-handler';
 
 const lucideIcons = { Printer, Usb, FileUp, RotateCw, FileText, Download, CheckCircle, Settings2, ChevronUp, ChevronDown };
 
@@ -49,24 +53,20 @@ const state = {
   brightness: 0,
   contrast: 0,
   grayscale: true,
-  textThreshold: 175,   // applied to text/non-barcode areas
-  barcodeThreshold: 200, // applied to detected barcode zones
-  barcodeErode: 1,       // erosion iterations in barcode zone (fixed)
-  originalCanvases: [], // Original rendered canvases from PDF
-  adjustedCanvases: [], // Canvases after brightness/contrast
+  textThreshold: 175,
+  barcodeThreshold: 200,
+  barcodeErode: 1,
+  originalCanvases: [],
+  adjustedCanvases: [],
   isCropping: false,
   barcodeValue: '',
   replaceBarcode: true,
   detectedBarcodes: [],
-  printerWidthPx: 384, // 58mm=384, 80mm=576, 100mm=720 (at 203dpi)
+  printerWidthPx: 384,
   eraseOriginalBarcode: false,
   showAdvanced: false,
 };
 
-/**
- * UI elements object.
- * @type {Object.<string, HTMLElement>}
- */
 const els = {
   fileUpload: document.getElementById('file-upload'),
   canvasWrapper: document.getElementById('canvas-wrapper'),
@@ -126,11 +126,9 @@ els.fileUpload.addEventListener('change', async (e) => {
     updateBarcodePreview();
     state.detectedBarcodes = [];
     
-    await loadAllPages();
+    await loadAllPages(state);
     renderThumbnails();
     
-    // Detect barcode BEFORE displaying page so the barcode preview panel
-    // is already visible when the cropper initializes — prevents layout shift
     await detectBarcodeFromCurrentPage();
     displayCurrentPage();
     
@@ -189,7 +187,6 @@ els.eraseOriginalToggle.addEventListener('change', (e) => {
   state.eraseOriginalBarcode = e.target.checked;
 });
 
-// Paper width selector
 const paperWidthMap = { '58': 384, '80': 576, '100': 720 };
 document.querySelectorAll('input[name="paper-width"]').forEach(radio => {
   radio.addEventListener('change', (e) => {
@@ -206,10 +203,8 @@ els.barcodeValueInput.addEventListener('input', (e) => {
 els.settingsToggle.addEventListener('click', () => {
   state.showAdvanced = !state.showAdvanced;
   els.advancedControls.hidden = !state.showAdvanced;
-  
-  // Flip chevron and update icons
   els.settingsChevron.setAttribute('data-lucide', state.showAdvanced ? 'chevron-down' : 'chevron-up');
-  createIcons({ icons: lucideIcons }); // Re-render Lucide icons
+  createIcons({ icons: lucideIcons });
 });
 
 /**
@@ -217,14 +212,10 @@ els.settingsToggle.addEventListener('click', () => {
  */
 function updateBarcodePreview() {
   const hasValue = !!state.barcodeValue;
-  
-  // Show the live preview panel whenever a barcode value exists
   els.liveBarcodePreview.hidden = !hasValue;
-  
   if (!hasValue) return;
   
   els.liveBarcodeText.textContent = state.barcodeValue;
-  
   try {
     JsBarcode(els.liveBarcodeCanvas, state.barcodeValue, {
       format: "CODE128",
@@ -252,42 +243,26 @@ els.connectBtn.addEventListener('click', async () => {
   }
 });
 
-els.printCurrentBtn.addEventListener('click', () => printPages([state.currentPage]));
-els.printAllBtn.addEventListener('click', () => {
-  const pages = Array.from({ length: state.pdfRenderer.numPages }, (_, i) => i + 1);
-  printPages(pages);
+els.printCurrentBtn.addEventListener('click', () => {
+  printPages(state, [state.currentPage], (value) => {
+    state.barcodeValue = value;
+    els.barcodeValueInput.value = value;
+    updateBarcodePreview();
+  });
 });
 
-els.downloadBtn.addEventListener('click', downloadCroppedPdf);
+els.printAllBtn.addEventListener('click', () => {
+  const pages = Array.from({ length: state.pdfRenderer.numPages }, (_, i) => i + 1);
+  printPages(state, pages, (value) => {
+    state.barcodeValue = value;
+    els.barcodeValueInput.value = value;
+    updateBarcodePreview();
+  });
+});
+
+els.downloadBtn.addEventListener('click', () => downloadCroppedPdf(state));
 
 // --- Core Functions ---
-
-/**
- * Loads all pages from the current PDF renderer and auto-crops white margins.
- * @returns {Promise<void>}
- */
-async function loadAllPages() {
-  state.originalCanvases = [];
-  for (let i = 1; i <= state.pdfRenderer.numPages; i++) {
-    const rawCanvas = await state.pdfRenderer.renderPage(i, 3); // High resolution for cropping
-    
-    // Auto-crop white margins immediately
-    const autoCropRect = ImageProcessor.getAutoCropRect(rawCanvas);
-    const croppedCanvas = document.createElement('canvas');
-    croppedCanvas.width = autoCropRect.width;
-    croppedCanvas.height = autoCropRect.height;
-    const ctx = croppedCanvas.getContext('2d');
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, croppedCanvas.width, croppedCanvas.height);
-    ctx.drawImage(
-      rawCanvas, 
-      autoCropRect.x, autoCropRect.y, autoCropRect.width, autoCropRect.height, 
-      0, 0, autoCropRect.width, autoCropRect.height
-    );
-    
-    state.originalCanvases.push(croppedCanvas);
-  }
-}
 
 /**
  * Detects barcodes from the current page and updates the state.
@@ -298,11 +273,10 @@ async function detectBarcodeFromCurrentPage() {
   if (!original) return;
 
   try {
-    const barcodeRects = await ImageProcessor.detectBarcodeRects(original);
+    const barcodeRects = await BarcodeDetectorUtil.detectBarcodeRects(original);
     state.detectedBarcodes = barcodeRects;
 
     if (barcodeRects.length > 0) {
-      // Use the first detected barcode value
       const detectedValue = barcodeRects[0].value;
       if (detectedValue) {
         state.barcodeValue = detectedValue;
@@ -347,19 +321,13 @@ function displayCurrentPage() {
   const original = state.originalCanvases[state.currentPage - 1];
   if (!original) return;
 
-  // Rotate original for display
   const rotated = rotateCanvas(original, state.rotation);
-  
-  // Apply adjustments
   const adjusted = ImageProcessor.applyAdjustments(rotated, state.brightness, state.contrast, state.grayscale);
   
   els.canvasWrapper.innerHTML = '';
-  
-  // Create a wrapper that shrinks to the canvas size
   const tightWrapper = document.createElement('div');
   tightWrapper.className = 'tight-cropper-wrapper';
   
-  // Reset canvas styles for display - fit to screen without overflow
   adjusted.style.display = 'block';
   adjusted.style.maxWidth = '100%';
   adjusted.style.maxHeight = '100%';
@@ -369,7 +337,6 @@ function displayCurrentPage() {
   tightWrapper.appendChild(adjusted);
   els.canvasWrapper.appendChild(tightWrapper);
   
-  // Initialize or update cropper
   state.cropManager.init(adjusted);
 }
 
@@ -377,194 +344,5 @@ function displayCurrentPage() {
  * Re-renders the current page to reflect slider adjustments.
  */
 function updateAdjustments() {
-  // To avoid lag, we only update the display if cropper is active
-  // but for simplicity here we re-render current page
   displayCurrentPage();
-}
-
-/**
- * Rotates a canvas by specified degrees using pixel-perfect integer transforms.
- * @param {HTMLCanvasElement} canvas - Source canvas.
- * @param {number} degrees - Rotation in degrees (90, 180, 270).
- * @returns {HTMLCanvasElement} Rotated canvas.
- */
-function rotateCanvas(canvas, degrees) {
-  if (degrees === 0) return canvas;
-  
-  const W = canvas.width;
-  const H = canvas.height;
-  const out = document.createElement('canvas');
-  const ctx = out.getContext('2d');
-  ctx.imageSmoothingEnabled = false;
-  
-  if (degrees === 90 || degrees === 270) {
-    out.width = H;
-    out.height = W;
-  } else {
-    out.width = W;
-    out.height = H;
-  }
-  
-  // Fill with white to prevent transparency artifacts
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, out.width, out.height);
-  
-  // Use setTransform with INTEGER-ONLY values for pixel-perfect rotation.
-  if (degrees === 90) {
-    // 90° CW: src(x,y) → dst(H-1-y, x)
-    ctx.setTransform(0, 1, -1, 0, H, 0);
-  } else if (degrees === 180) {
-    // 180°: src(x,y) → dst(W-1-x, H-1-y)
-    ctx.setTransform(-1, 0, 0, -1, W, H);
-  } else if (degrees === 270) {
-    // 270° CW: src(x,y) → dst(y, W-1-x)
-    ctx.setTransform(0, -1, 1, 0, 0, W);
-  }
-  
-  ctx.drawImage(canvas, 0, 0);
-  ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset
-  
-  return out;
-}
-
-/**
- * Processes and prints specified pages to the thermal printer.
- * @param {number[]} pageNumbers - Array of 1-based page numbers.
- * @returns {Promise<void>}
- */
-async function printPages(pageNumbers) {
-  if (!state.usbPrinter.isConnected) {
-    Toast.warn('Please connect a printer first.', 'Printer Offline', 0);
-    return;
-  }
-
-  const cropData = state.cropManager.getCropData();
-  if (!cropData) {
-    Toast.warn('Please draw a crop selection first.', 'Missing Selection', 0);
-    return;
-  }
-
-  try {
-    const builder = new EscPosBuilder().init()
-      .setLineSpacing(0); // No gaps between raster lines — critical for barcode readability
-
-    for (const pageNum of pageNumbers) {
-      const original = state.originalCanvases[pageNum - 1];
-      const rotated = rotateCanvas(original, state.rotation);
-
-      // Apply brightness/contrast/grayscale adjustments for PRINTING
-      const adjusted = ImageProcessor.applyAdjustments(rotated, state.brightness, state.contrast, state.grayscale);
-      const cropped = await state.cropManager.getCroppedCanvas(adjusted, cropData);
-
-      // Multi-step resize to printer width — preserves barcode detail
-      const resized = ImageProcessor.resizeStepDown(cropped, state.printerWidthPx);
-
-      // For DETECTION, use a clean crop without user's brightness/contrast adjustments
-      const unadjustedCropped = await state.cropManager.getCroppedCanvas(rotated, cropData);
-      
-      // Detect barcode zones using ZXing on the high-res UNADJUSTED cropped canvas
-      const barcodeRectsRaw = await ImageProcessor.detectBarcodeRects(unadjustedCropped);
-
-      // Scale detected rects to the resized canvas (384px width)
-      const scaleFactor = resized.width / unadjustedCropped.width;
-      const barcodeRects = barcodeRectsRaw.map(r => ({
-        x: Math.round(r.x * scaleFactor),
-        y: Math.round(r.y * scaleFactor),
-        w: Math.round(r.w * scaleFactor),
-        h: Math.round(r.h * scaleFactor),
-        value: r.value
-      }));
-
-      // Update state with detected value if not already manually edited
-      if (barcodeRects.length > 0 && !state.barcodeValue) {
-        state.barcodeValue = barcodeRects[0].value;
-        els.barcodeValueInput.value = state.barcodeValue;
-        updateBarcodePreview();
-      }
-
-      // Barcode Replacement Logic — prepend digital barcode, keep original intact
-      if (state.replaceBarcode && state.barcodeValue) {
-        const pw = state.printerWidthPx;
-        const bcCanvas = document.createElement('canvas');
-        bcCanvas.width = pw;
-        bcCanvas.height = 120;
-        const bcCtx = bcCanvas.getContext('2d');
-        bcCtx.fillStyle = '#ffffff';
-        bcCtx.fillRect(0, 0, pw, 120);
-        
-        try {
-          JsBarcode(bcCanvas, state.barcodeValue, {
-            format: "CODE128",
-            displayValue: true,
-            fontSize: 20,
-            margin: 10,
-            width: 2,
-            height: 70
-          });
-          
-          const bcMono = ImageProcessor.toMonochrome(bcCanvas, 128);
-          builder.rasterImage(bcMono.data, bcMono.width, bcMono.height)
-                 .feed(1);
-        } catch (e) {
-          console.warn("Replacement barcode generation failed:", e);
-        }
-      }
-
-      // Optional: Erase original barcode from receipt canvas
-      if (state.eraseOriginalBarcode && barcodeRects.length > 0) {
-        const resizedCtx = resized.getContext('2d');
-        resizedCtx.fillStyle = '#ffffff';
-        for (const rect of barcodeRects) {
-          resizedCtx.fillRect(rect.x, rect.y, rect.w, rect.h);
-        }
-      }
-
-      // Region-aware threshold
-      const mono = ImageProcessor.toMonochromeRegionAware(
-        resized,
-        state.textThreshold,
-        barcodeRects,
-        state.barcodeThreshold,
-        state.barcodeErode
-      );
-
-      builder.rasterImage(mono.data, mono.width, mono.height)
-             .feed(3);
-    }
-
-    builder.cut();
-    await state.usbPrinter.print(builder.getBuffer());
-  } catch (err) {
-    console.error('Print failed:', err);
-    Toast.error('Printing failed. Check console for details.', 'Print Error');
-  }
-}
-
-/**
- * Generates and downloads a PDF containing all cropped and adjusted pages.
- * @returns {Promise<void>}
- */
-async function downloadCroppedPdf() {
-  const cropData = state.cropManager.getCropData();
-  if (!cropData) return Toast.warn('Select crop first', 'Missing Selection');
-
-  const pdf = new jsPDF();
-  
-  for (let i = 0; i < state.originalCanvases.length; i++) {
-    const rotated = rotateCanvas(state.originalCanvases[i], state.rotation);
-    const adjusted = ImageProcessor.applyAdjustments(rotated, state.brightness, state.contrast, state.grayscale);
-    const cropped = await state.cropManager.getCroppedCanvas(adjusted, cropData);
-    
-    const imgData = cropped.toDataURL('image/jpeg', 0.95);
-    
-    // Add page if not first
-    if (i > 0) pdf.addPage();
-    
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (cropped.height * pdfWidth) / cropped.width;
-    
-    pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-  }
-  
-  pdf.save('resisnap-cropped.pdf');
 }
