@@ -162,6 +162,8 @@ const els = {
   howToBtn: document.getElementById('how-to-btn'),
   privacyLink: document.getElementById('privacy-link'),
   termsLink: document.getElementById('terms-link'),
+  infoBuatUlang: document.getElementById('info-buat-ulang'),
+  infoHapusAsli: document.getElementById('info-hapus-asli'),
 };
 
 // Check Browser Support
@@ -183,8 +185,9 @@ if (!navigator.usb && !navigator.bluetooth) {
  * Opens a modal with the specified title and content from a template.
  * @param {string} title 
  * @param {string} templateId 
+ * @param {boolean} isSmall
  */
-function openModal(title, templateId) {
+function openModal(title, templateId, isSmall = false) {
   if (!els.modalOverlay || !els.modalTitle || !els.modalBody) return;
   
   els.modalTitle.textContent = title;
@@ -192,6 +195,12 @@ function openModal(title, templateId) {
   if (template) {
     els.modalBody.innerHTML = '';
     els.modalBody.appendChild(template.content.cloneNode(true));
+  }
+  
+  const card = els.modalOverlay.querySelector('.modal-card');
+  if (card) {
+    if (isSmall) card.classList.add('modal-sm');
+    else card.classList.remove('modal-sm');
   }
   
   els.modalOverlay.hidden = false;
@@ -231,6 +240,14 @@ if (els.termsLink) {
     e.preventDefault();
     openModal('Syarat & Ketentuan', 'terms-template');
   };
+}
+
+if (els.infoBuatUlang) {
+  els.infoBuatUlang.onclick = () => openModal('Penjelasan Buat Ulang', 'buat-ulang-template', true);
+}
+
+if (els.infoHapusAsli) {
+  els.infoHapusAsli.onclick = () => openModal('Penjelasan Hapus Asli', 'hapus-asli-template', true);
 }
 
 // --- Event Handlers ---

@@ -77,10 +77,16 @@
                             <label class="toggle-label compact">
                                 <input type="checkbox" id="replace-barcode-toggle" checked>
                                 <span class="toggle-text">Buat Ulang</span>
+                                <button type="button" class="info-btn" id="info-buat-ulang" data-tooltip="Klik untuk penjelasan detail Buat Ulang">
+                                    <i data-lucide="info"></i>
+                                </button>
                             </label>
                             <label class="toggle-label compact">
                                 <input type="checkbox" id="erase-original-toggle">
                                 <span class="toggle-text">Hapus Asli</span>
+                                <button type="button" class="info-btn" id="info-hapus-asli" data-tooltip="Klik untuk penjelasan detail Hapus Asli">
+                                    <i data-lucide="info"></i>
+                                </button>
                             </label>
                         </div>
                     </div>
@@ -260,6 +266,22 @@
                     <span class="option-desc">Praktis tanpa kabel untuk perangkat Android</span>
                 </div>
             </button>
+        </div>
+    </template>
+
+    <template id="buat-ulang-template">
+        <div class="content-text">
+            <h3>Fitur Buat Ulang Barcode</h3>
+            <p>Fitur ini akan mendeteksi barcode asli dari PDF, lalu membuat ulang barcode tersebut dengan kualitas digital yang lebih tinggi.</p>
+            <p><strong>Keuntungan:</strong> Hasil cetak barcode akan sangat tajam, hitam pekat, dan sangat mudah dipindai oleh kurir, meskipun printer Anda memiliki resolusi rendah.</p>
+        </div>
+    </template>
+
+    <template id="hapus-asli-template">
+        <div class="content-text">
+            <h3>Fitur Hapus Barcode Asli</h3>
+            <p>Fitur ini akan menutupi atau menghapus area barcode asli yang ada pada file PDF Anda.</p>
+            <p><strong>Mengapa digunakan?</strong> Agar tidak terjadi penumpukan antara barcode asli yang mungkin pudar dengan barcode baru yang dibuat ulang. Ini memastikan hanya ada satu barcode yang bersih pada resi Anda.</p>
         </div>
     </template>
 

@@ -522,6 +522,106 @@ input[type="range"] {
   color: var(--text);
 }
 
+.info-btn {
+  background: none;
+  border: none;
+  padding: 2px;
+  margin-left: 2px;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  border-radius: 50%;
+  position: relative;
+}
+
+.info-btn:hover {
+  color: var(--primary);
+  background-color: rgba(238, 77, 45, 0.1);
+}
+
+.info-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Premium Tooltip - Now popping DOWN to avoid clipping */
+[data-tooltip] {
+  position: relative;
+}
+
+[data-tooltip]::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: 160%; /* Changed from bottom: 150% */
+  left: 50%;
+  transform: translateX(-50%) translateY(-10px);
+  background: rgba(33, 33, 33, 0.95);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  width: 220px;
+  text-align: center;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+  font-weight: 400;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+[data-tooltip]::after {
+  content: '';
+  position: absolute;
+  top: 140%; /* Changed from bottom: 130% */
+  left: 50%;
+  transform: translateX(-50%) translateY(-10px);
+  border-width: 0 6px 6px 6px; /* Arrow points up */
+  border-style: solid;
+  border-color: transparent transparent rgba(33, 33, 33, 0.95) transparent;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+[data-tooltip]:hover::before,
+[data-tooltip]:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+@media (max-width: 768px) {
+  [data-tooltip]::before {
+    width: 180px;
+    font-size: 0.7rem;
+    left: auto;
+    right: -10px;
+    transform: translateY(-10px);
+  }
+  
+  [data-tooltip]::after {
+    left: auto;
+    right: 5px;
+    transform: translateY(-10px);
+  }
+
+  [data-tooltip]:hover::before,
+  [data-tooltip]:hover::after {
+    transform: translateY(0);
+  }
+}
+
+.modal-card.modal-sm {
+  max-width: 420px;
+}
+
 /* ===== Buttons ===== */
 .btn {
   display: inline-flex;
