@@ -1,5 +1,5 @@
 :root {
-  --primary: #ee4d2d; /* Shopee Orange */
+  --primary: #ee4d2d;
   --primary-hover: #d73211;
   --bg: #ffffff;
   --surface: #ffffff;
@@ -52,6 +52,12 @@ body {
   gap: 0.5rem;
 }
 
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
 .logo {
   display: flex;
   align-items: center;
@@ -59,6 +65,35 @@ body {
   font-weight: 700;
   font-size: 1.25rem;
   color: var(--primary);
+  margin: 0;
+}
+
+.top-nav {
+  display: flex;
+  align-items: center;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: color 0.2s;
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius);
+}
+
+.nav-link:hover {
+  color: var(--primary);
+  background-color: rgba(238, 77, 45, 0.05);
+}
+
+.nav-link i {
+  width: 16px;
+  height: 16px;
 }
 
 .actions {
@@ -544,6 +579,47 @@ input[type="range"] {
   background-color: #4caf50;
 }
 
+/* ===== Footer ===== */
+.footer {
+  padding: 0.5rem 1.5rem;
+  background-color: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  z-index: 10;
+}
+
+.footer-links {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.footer-links a {
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.footer-links a:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.separator {
+  color: var(--border);
+}
+
+.footer-tagline {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  opacity: 0.8;
+}
+
 /* ===== Warning Banner ===== */
 .warning-banner {
   background-color: #fff3e0;
@@ -589,8 +665,18 @@ input[type="range"] {
     align-items: stretch;
   }
 
+  .header-brand {
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+
   .logo {
     font-size: 1.1rem;
+  }
+
+  .nav-link {
+    padding: 0.25rem;
   }
 
   .actions {
@@ -706,6 +792,13 @@ input[type="range"] {
 
   .drop-zone p {
     font-size: 0.9rem;
+  }
+
+  .footer {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    text-align: center;
   }
 }
 

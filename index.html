@@ -3,26 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ResiSnap - Shopee Thermal Printer Tool</title>
+    <title>ResiSnap - Cetak Resi Tokopedia, Shopee & Marketplace</title>
+    <meta name="description" content="Alat cetak resi thermal online untuk Tokopedia, Shopee, Bukalapak, dan marketplace lainnya. Mudah, cepat, dan scannable.">
     <link rel="stylesheet" href="./style.css">
 </head>
 <body>
     <div id="app">
         <!-- Browser Support Warning -->
         <div id="browser-warning" class="warning-banner" hidden>
-            ResiSnap works best on Chrome or Edge. Your current browser might not support direct printing (WebUSB).
+            ResiSnap berjalan paling baik di Chrome atau Edge. Browser Anda saat ini mungkin tidak mendukung pencetakan langsung (WebUSB).
         </div>
 
         <!-- Top Bar -->
         <header class="top-bar">
-            <div class="logo">
-                <i data-lucide="printer"></i>
-                <span>ResiSnap</span>
+            <div class="header-brand">
+                <h1 class="logo">
+                    <i data-lucide="printer"></i>
+                    <span>ResiSnap</span>
+                </h1>
+                <nav class="top-nav">
+                    <a href="#" id="how-to-btn" class="nav-link">
+                        <i data-lucide="help-circle"></i>
+                        <span>Cara Pakai</span>
+                    </a>
+                </nav>
             </div>
             <div class="actions">
                 <div class="status-indicator">
                     <span id="printer-status-dot" class="dot"></span>
-                    <span id="printer-status-text">Printer Disconnected</span>
+                    <span id="printer-status-text">Printer Terputus</span>
                 </div>
                 <div class="paper-width-selector">
                     <span class="paper-width-label">Lebar:</span>
@@ -38,11 +47,11 @@
                 </div>
                 <button id="connect-printer" class="btn btn-outline">
                     <i data-lucide="usb"></i>
-                    <span class="btn-text">Connect Printer</span>
+                    <span class="btn-text">Hubungkan Printer</span>
                 </button>
                 <label for="file-upload" class="btn btn-primary">
                     <i data-lucide="file-up"></i>
-                    <span class="btn-text">Upload PDF</span>
+                    <span class="btn-text">Unggah PDF</span>
                     <input type="file" id="file-upload" accept="application/pdf" hidden>
                 </label>
             </div>
@@ -62,7 +71,7 @@
                         <div class="live-barcode-controls">
                             <label class="toggle-label compact">
                                 <input type="checkbox" id="replace-barcode-toggle" checked>
-                                <span class="toggle-text">Regenerate</span>
+                                <span class="toggle-text">Buat Ulang</span>
                             </label>
                             <label class="toggle-label compact">
                                 <input type="checkbox" id="erase-original-toggle">
@@ -72,7 +81,7 @@
                     </div>
                     <canvas id="live-barcode-canvas"></canvas>
                     <div class="live-barcode-edit">
-                        <input type="text" id="barcode-value-input" placeholder="No barcode detected">
+                        <input type="text" id="barcode-value-input" placeholder="Tidak ada barcode terdeteksi">
                     </div>
                 </div>
 
@@ -81,7 +90,7 @@
                     <!-- Canvas will be inserted here -->
                     <div id="drop-zone" class="drop-zone">
                         <i data-lucide="file-text" style="width: 48px; height: 48px; margin-bottom: 1rem;"></i>
-                        <p>Upload a Shopee PDF to get started</p>
+                        <p>Upload PDF (Tokopedia, Shopee, dll) untuk memulai</p>
                     </div>
                 </div>
             </div>
@@ -89,7 +98,7 @@
             <!-- Page Selection Sidebar -->
             <aside class="sidebar">
                 <div class="sidebar-header">
-                    Pages (<span id="page-count">0</span>)
+                    Halaman (<span id="page-count">0</span>)
                 </div>
                 <div id="thumbnail-strip" class="thumbnail-strip">
                     <!-- Thumbnails will be inserted here -->
@@ -100,12 +109,12 @@
         <!-- Control Panel -->
         <section class="control-panel">
             <div class="control-group">
-                <button id="rotate-btn" class="btn btn-outline btn-icon" title="Rotate 90° Clockwise">
+                <button id="rotate-btn" class="btn btn-outline btn-icon" title="Putar 90°">
                     <i data-lucide="rotate-cw"></i>
                 </button>
-                <button id="settings-toggle" class="btn btn-outline" title="Show/Hide Advanced Settings">
+                <button id="settings-toggle" class="btn btn-outline" title="Tampilkan/Sembunyikan Pengaturan Lanjutan">
                     <i data-lucide="settings-2"></i>
-                    <span class="btn-text">Settings</span>
+                    <span class="btn-text">Pengaturan</span>
                     <i id="settings-chevron" data-lucide="chevron-up"></i>
                 </button>
             </div>
@@ -115,11 +124,11 @@
                     <div class="toggle-group">
                         <label class="toggle-label">
                             <input type="checkbox" id="grayscale-toggle" checked>
-                            <span class="toggle-text">B&W</span>
+                            <span class="toggle-text">Hitam Putih</span>
                         </label>
                     </div>
                     <div class="slider-group">
-                        <label>Brightness <span id="brightness-val">0</span></label>
+                        <label>Kecerahan <span id="brightness-val">0</span></label>
                         <input type="range" id="brightness" min="-100" max="100" value="0">
                     </div>
                     <div class="slider-group">
@@ -127,16 +136,16 @@
                         <input type="range" id="contrast" min="-100" max="100" value="0">
                     </div>
                     <div class="slider-group">
-                        <label>Text Threshold <span id="threshold-val">175</span></label>
+                        <label>Ambang Teks <span id="threshold-val">175</span></label>
                         <input type="range" id="threshold" min="64" max="220" value="175">
                     </div>
                     <div class="slider-group">
-                        <label>Barcode Threshold <span id="barcode-threshold-val">200</span></label>
-                        <input type="range" id="barcode-threshold" min="128" max="250" value="200" title="Adjust if barcode is too thin or too thick">
+                        <label>Ambang Barcode <span id="barcode-threshold-val">200</span></label>
+                        <input type="range" id="barcode-threshold" min="128" max="250" value="200" title="Sesuaikan jika barcode terlalu tipis atau tebal">
                     </div>
                     <div class="slider-group">
-                        <label>Barcode Thinning <span id="barcode-erode-val">1</span></label>
-                        <input type="range" id="barcode-erode" min="0" max="3" value="1" title="0 = No thinning, 1 = Normal, 2+ = Extreme">
+                        <label>Penipisan Barcode <span id="barcode-erode-val">1</span></label>
+                        <input type="range" id="barcode-erode" min="0" max="3" value="1" title="0 = Tanpa penipisan, 1 = Normal, 2+ = Ekstrim">
                     </div>
                 </div>
             </div>
@@ -144,18 +153,31 @@
             <div class="control-group actions-right">
                 <button id="download-pdf" class="btn btn-outline" disabled>
                     <i data-lucide="download"></i>
-                    <span class="btn-text">Download PDF</span>
+                    <span class="btn-text">Unduh PDF</span>
                 </button>
                 <button id="print-current" class="btn btn-outline" disabled>
                     <i data-lucide="printer"></i>
-                    <span class="btn-text-mobile">Print</span>
+                    <span class="btn-text-mobile">Cetak</span>
                 </button>
                 <button id="print-all" class="btn btn-primary" disabled>
                     <i data-lucide="printer"></i>
-                    <span class="btn-text-mobile">Print All</span>
+                    <span class="btn-text-mobile">Cetak Semua</span>
                 </button>
             </div>
         </section>
+        
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-links">
+                <a href="#" id="privacy-link">Ketentuan Privasi</a>
+                <span class="separator">•</span>
+                <a href="#" id="terms-link">Syarat & Ketentuan</a>
+            </div>
+            <div class="footer-tagline">
+                <i data-lucide="info" style="width: 12px; height: 12px;"></i>
+                ResiSnap - Solusi Cetak Resi Marketplace
+            </div>
+        </footer>
     </div>
 
     <!-- Hidden barcode preview canvas (for sidebar, kept for JS compatibility) -->

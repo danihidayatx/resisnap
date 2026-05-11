@@ -1,9 +1,9 @@
 /**
  * @file Main entry point for the ResiSnap application.
- * Handles UI interactions, PDF processing, and printer communication.
+ * Multi-marketplace thermal printer tool for Tokopedia, Shopee, and others.
  */
 
-import { createIcons, Printer, Usb, FileUp, RotateCw, FileText, Download, CheckCircle, Settings2, ChevronUp, ChevronDown } from 'lucide';
+import { createIcons, Printer, Usb, FileUp, RotateCw, FileText, Download, CheckCircle, Settings2, ChevronUp, ChevronDown, HelpCircle, Info } from 'lucide';
 import { PdfRenderer } from './pdf-renderer';
 import { CropManager } from './cropper';
 import { ImageProcessor } from './image-proc';
@@ -17,7 +17,7 @@ import { rotateCanvas } from './canvas-utils';
 import { loadAllPages, downloadCroppedPdf } from './pdf-handler';
 import { printPages } from './print-handler';
 
-const lucideIcons = { Printer, Usb, FileUp, RotateCw, FileText, Download, CheckCircle, Settings2, ChevronUp, ChevronDown };
+const lucideIcons = { Printer, Usb, FileUp, RotateCw, FileText, Download, CheckCircle, Settings2, ChevronUp, ChevronDown, HelpCircle, Info };
 
 // Initialize Lucide icons
 createIcons({
@@ -164,7 +164,7 @@ if (!navigator.usb) {
 async function handleFile(file) {
   if (!file || file.type !== 'application/pdf') {
     if (file && file.type !== 'application/pdf') {
-      Toast.error('Please upload a PDF file.', 'Invalid File');
+      Toast.error('Silakan unggah file PDF.', 'File Tidak Valid');
     }
     return;
   }
@@ -190,7 +190,7 @@ async function handleFile(file) {
     els.downloadBtn.disabled = false;
   } catch (err) {
     console.error('Error loading PDF:', err);
-    Toast.error('Failed to load PDF. Please try another file.', 'PDF Error');
+    Toast.error('Gagal memuat PDF. Silakan coba file lain.', 'Error PDF');
   }
 }
 
@@ -328,11 +328,11 @@ els.connectBtn.addEventListener('click', async () => {
   try {
     const name = await state.usbPrinter.connect();
     els.printerStatusDot.classList.add('connected');
-    els.printerStatusText.textContent = `Connected: ${name}`;
-    els.connectBtn.textContent = 'Change Printer';
+    els.printerStatusText.textContent = `Terhubung: ${name}`;
+    els.connectBtn.textContent = 'Ganti Printer';
   } catch (err) {
     console.error('Printer Connection Failed:', err);
-    Toast.error('Could not connect to printer. Make sure it is connected and you have selected it in the dialog.', 'Connection Error');
+    Toast.error('Tidak dapat terhubung ke printer. Pastikan printer menyala dan Anda telah memilihnya di dialog.', 'Error Koneksi');
   }
 });
 
