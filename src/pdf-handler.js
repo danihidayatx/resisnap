@@ -39,7 +39,7 @@ export async function downloadCroppedPdf(state) {
   const cropData = state.cropManager.getCropData();
   if (!cropData) return Toast.warn('Select crop first', 'Missing Selection');
 
-  const pdf = new jsPDF();
+  let pdf = null;
   
   for (let i = 0; i < state.originalCanvases.length; i++) {
     const rotated = rotateCanvas(state.originalCanvases[i], state.rotation);
@@ -48,13 +48,24 @@ export async function downloadCroppedPdf(state) {
     
     const imgData = cropped.toDataURL('image/jpeg', 0.95);
     
-    if (i > 0) pdf.addPage();
+    const width = cropped.width;
+    const height = cropped.height;
+    const orientation = width > height ? 'l' : 'p';
     
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (cropped.height * pdfWidth) / cropped.width;
+    if (i === 0) {
+      pdf = new jsPDF({
+        orientation: orientation,
+        unit: 'px',
+        format: [width, height]
+      });
+    } else {
+      pdf.addPage([width, height], orientation);
+    }
     
-    pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+    pdf.addImage(imgData, 'JPEG', 0, 0, width, height);
   }
   
-  pdf.save('resisnap-cropped.pdf');
+  if (pdf) {
+    pdf.save('resisnap-cropped.pdf');
+  }
 }
