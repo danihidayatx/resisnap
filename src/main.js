@@ -314,15 +314,18 @@ function displayCurrentPage() {
   
   els.canvasWrapper.innerHTML = '';
   
-  // Wrap canvas tightly so CropperJS only takes the size of the image, not the full screen
+  // Create a wrapper that shrinks to the canvas size
   const tightWrapper = document.createElement('div');
-  tightWrapper.style.maxWidth = '100%';
-  tightWrapper.style.maxHeight = '100%';
-  tightWrapper.style.display = 'flex';
-  tightWrapper.style.alignItems = 'center';
-  tightWrapper.style.justifyContent = 'center';
-  tightWrapper.appendChild(adjusted);
+  tightWrapper.className = 'tight-cropper-wrapper';
   
+  // Reset canvas styles for display - fit to screen without overflow
+  adjusted.style.display = 'block';
+  adjusted.style.maxWidth = '100%';
+  adjusted.style.maxHeight = '100%';
+  adjusted.style.width = 'auto';
+  adjusted.style.height = 'auto';
+  
+  tightWrapper.appendChild(adjusted);
   els.canvasWrapper.appendChild(tightWrapper);
   
   // Initialize or update cropper

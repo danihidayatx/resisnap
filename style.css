@@ -1,12 +1,12 @@
 :root {
   --primary: #ee4d2d; /* Shopee Orange */
   --primary-hover: #d73211;
-  --bg: #f5f5f5;
+  --bg: #ffffff;
   --surface: #ffffff;
   --text: #212121;
   --text-muted: #757575;
-  --border: #e0e0e0;
-  --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --border: #eeeeee;
+  --shadow: none;
   --radius: 8px;
 }
 
@@ -118,8 +118,21 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
-  background-color: var(--surface);
+  overflow: hidden; /* No scrolling, fit to screen */
+  background-color: #ffffff !important;
+}
+
+.tight-cropper-wrapper {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .preview-canvas-wrapper canvas {
@@ -242,11 +255,24 @@ body {
 
 .cropper-container {
   box-shadow: none !important;
+  background-color: #ffffff !important;
+  border: none !important;
+}
+
+.cropper-wrap-box, .cropper-canvas, .cropper-drag-box, .cropper-crop-box {
+  background-color: transparent !important;
+  border: none !important;
 }
 
 .cropper-modal {
-  opacity: 0.1 !important;
-  background-color: #000 !important;
+  opacity: 0.05 !important; /* Extremely subtle, almost invisible */
+  background-color: #ffffff !important; /* Trick: make it white but slightly opaque if needed */
+}
+
+/* Ensure the background of the image being cropped is also white */
+.cropper-view-box {
+  outline: 2px solid var(--primary) !important; /* Keep the red outline for the user to see where they crop */
+  background-color: transparent !important;
 }
 
 .live-barcode-edit {
