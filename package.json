@@ -1,7 +1,20 @@
 {
   "name": "resisnap",
-  "version": "0.0.0",
-  "private": true,
+  "version": "1.0.0",
+  "description": "Client-side web app for printing marketplace shipping labels to thermal printers via WebUSB",
+  "author": "Dani Hidayat",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/danihidayatx/resisnap.git"
+  },
+  "keywords": [
+    "thermal-printer",
+    "webusb",
+    "escpos",
+    "receipt-printer",
+    "shopee-receipt"
+  ],
   "type": "module",
   "scripts": {
     "dev": "vite",
