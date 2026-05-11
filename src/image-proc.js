@@ -46,7 +46,7 @@ export class ImageProcessor {
    * @param {number} threshold - RGB value below which a pixel is considered non-white
    * @returns {Object} {x, y, width, height}
    */
-  static getAutoCropRect(canvas, threshold = 250) {
+  static getAutoCropRect(canvas, threshold = 230) {
     const ctx = canvas.getContext('2d');
     const width = canvas.width;
     const height = canvas.height;
@@ -63,7 +63,10 @@ export class ImageProcessor {
         const b = data[i + 2];
         const a = data[i + 3];
 
-        if (a > 10 && (r < threshold || g < threshold || b < threshold)) {
+        const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+
+        // Ignore white/faint-grey backgrounds. Only keep pixels darker than threshold.
+        if (a > 10 && lum < threshold) {
           if (x < minX) minX = x;
           if (x > maxX) maxX = x;
           if (y < minY) minY = y;

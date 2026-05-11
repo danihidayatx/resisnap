@@ -104,9 +104,10 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 1.5rem;
+  padding: 1rem;
   overflow: hidden; /* Prevent scrolling, force flex children to shrink */
   gap: 1rem;
+  background-color: var(--surface); /* Ensure consistent background with PDF */
 }
 
 .preview-canvas-wrapper {
@@ -118,6 +119,7 @@ body {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  background-color: var(--surface);
 }
 
 .preview-canvas-wrapper canvas {
@@ -239,7 +241,12 @@ body {
 }
 
 .cropper-container {
-  box-shadow: var(--shadow);
+  box-shadow: none !important;
+}
+
+.cropper-modal {
+  opacity: 0.1 !important;
+  background-color: #000 !important;
 }
 
 .live-barcode-edit {
@@ -604,12 +611,15 @@ input[type="range"] {
   }
 
   .preview-container {
-    padding: 0.75rem;
+    padding: 0;
+    gap: 0;
   }
 
   .live-barcode-preview {
     padding: 0.5rem 0.75rem;
-    max-width: 100%;
+    width: calc(100% - 1.5rem);
+    margin-top: 0.75rem;
+    margin-bottom: 0.5rem;
   }
 
   .live-barcode-header {

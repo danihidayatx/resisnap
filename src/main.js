@@ -313,7 +313,17 @@ function displayCurrentPage() {
   const adjusted = ImageProcessor.applyAdjustments(rotated, state.brightness, state.contrast, state.grayscale);
   
   els.canvasWrapper.innerHTML = '';
-  els.canvasWrapper.appendChild(adjusted);
+  
+  // Wrap canvas tightly so CropperJS only takes the size of the image, not the full screen
+  const tightWrapper = document.createElement('div');
+  tightWrapper.style.maxWidth = '100%';
+  tightWrapper.style.maxHeight = '100%';
+  tightWrapper.style.display = 'flex';
+  tightWrapper.style.alignItems = 'center';
+  tightWrapper.style.justifyContent = 'center';
+  tightWrapper.appendChild(adjusted);
+  
+  els.canvasWrapper.appendChild(tightWrapper);
   
   // Initialize or update cropper
   state.cropManager.init(adjusted);
