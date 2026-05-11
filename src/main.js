@@ -4,6 +4,7 @@ import { CropManager } from './cropper';
 import { ImageProcessor } from './image-proc';
 import { EscPosBuilder } from './escpos';
 import { UsbPrinter } from './usb-printer';
+import { Toast } from './toast';
 import { jsPDF } from 'jspdf';
 import JsBarcode from 'jsbarcode';
 
@@ -111,7 +112,7 @@ els.fileUpload.addEventListener('change', async (e) => {
     els.downloadBtn.disabled = false;
   } catch (err) {
     console.error('Error loading PDF:', err);
-    alert('Failed to load PDF. Please try another file.');
+    Toast.error('Failed to load PDF. Please try another file.', 'PDF Error');
   }
 });
 
@@ -217,7 +218,7 @@ els.connectBtn.addEventListener('click', async () => {
     els.connectBtn.textContent = 'Change Printer';
   } catch (err) {
     console.error('Printer Connection Failed:', err);
-    alert('Could not connect to printer. Make sure it is connected and you have selected it in the dialog.');
+    Toast.error('Could not connect to printer. Make sure it is connected and you have selected it in the dialog.', 'Connection Error');
   }
 });
 
@@ -382,13 +383,13 @@ function rotateCanvas(canvas, degrees) {
 
 async function printPages(pageNumbers) {
   if (!state.usbPrinter.isConnected) {
-    alert('Please connect a printer first.');
+    Toast.warn('Please connect a printer first.', 'Printer Offline', 0);
     return;
   }
 
   const cropData = state.cropManager.getCropData();
   if (!cropData) {
-    alert('Please draw a crop selection first.');
+    Toast.warn('Please draw a crop selection first.', 'Missing Selection', 0);
     return;
   }
 
@@ -489,14 +490,13 @@ async function printPages(pageNumbers) {
     await state.usbPrinter.print(builder.getBuffer());
   } catch (err) {
     console.error('Print failed:', err);
-
-    alert('Printing failed. Check console for details.');
+    Toast.error('Printing failed. Check console for details.', 'Print Error');
   }
 }
 
 async function downloadCroppedPdf() {
   const cropData = state.cropManager.getCropData();
-  if (!cropData) return alert('Select crop first');
+  if (!cropData) return Toast.warn('Select crop first', 'Missing Selection');
 
   const pdf = new jsPDF();
   
