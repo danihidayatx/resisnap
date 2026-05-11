@@ -24,25 +24,25 @@
                     <span id="printer-status-dot" class="dot"></span>
                     <span id="printer-status-text">Printer Disconnected</span>
                 </div>
-                <div class="paper-width-selector" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0.75rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-secondary);">
-                    <span style="font-size: 0.75rem; color: var(--text-muted); white-space: nowrap;">Lebar:</span>
-                    <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 0.2rem; cursor: pointer;">
+                <div class="paper-width-selector">
+                    <span class="paper-width-label">Lebar:</span>
+                    <label class="paper-radio">
                         <input type="radio" name="paper-width" value="58" checked> 58mm
                     </label>
-                    <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 0.2rem; cursor: pointer;">
+                    <label class="paper-radio">
                         <input type="radio" name="paper-width" value="80"> 80mm
                     </label>
-                    <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 0.2rem; cursor: pointer;">
+                    <label class="paper-radio">
                         <input type="radio" name="paper-width" value="100"> 100mm
                     </label>
                 </div>
                 <button id="connect-printer" class="btn btn-outline">
                     <i data-lucide="usb"></i>
-                    Connect Printer
+                    <span class="btn-text">Connect Printer</span>
                 </button>
                 <label for="file-upload" class="btn btn-primary">
                     <i data-lucide="file-up"></i>
-                    Upload PDF
+                    <span class="btn-text">Upload PDF</span>
                     <input type="file" id="file-upload" accept="application/pdf" hidden>
                 </label>
             </div>
@@ -52,9 +52,34 @@
         <main class="main-content">
             <!-- Large Preview -->
             <div class="preview-container">
+                <!-- Live Barcode Preview (above receipt) -->
+                <div id="live-barcode-preview" class="live-barcode-preview" hidden>
+                    <div class="live-barcode-header">
+                        <div class="live-barcode-label">
+                            <i data-lucide="check-circle" style="width: 14px; height: 14px; color: #4caf50;"></i>
+                            Barcode Digital: <span id="live-barcode-text"></span>
+                        </div>
+                        <div class="live-barcode-controls">
+                            <label class="toggle-label compact">
+                                <input type="checkbox" id="replace-barcode-toggle" checked>
+                                <span class="toggle-text">Regenerate</span>
+                            </label>
+                            <label class="toggle-label compact">
+                                <input type="checkbox" id="erase-original-toggle">
+                                <span class="toggle-text">Hapus Asli</span>
+                            </label>
+                        </div>
+                    </div>
+                    <canvas id="live-barcode-canvas"></canvas>
+                    <div class="live-barcode-edit">
+                        <input type="text" id="barcode-value-input" placeholder="No barcode detected">
+                    </div>
+                </div>
+
+                <!-- Receipt Canvas -->
                 <div id="canvas-wrapper" class="preview-canvas-wrapper">
                     <!-- Canvas will be inserted here -->
-                    <div id="drop-zone" style="padding: 4rem; border: 2px dashed var(--border); border-radius: var(--radius); text-align: center; color: var(--text-muted);">
+                    <div id="drop-zone" class="drop-zone">
                         <i data-lucide="file-text" style="width: 48px; height: 48px; margin-bottom: 1rem;"></i>
                         <p>Upload a Shopee PDF to get started</p>
                     </div>
@@ -78,68 +103,63 @@
                 <button id="rotate-btn" class="btn btn-outline btn-icon" title="Rotate 90° Clockwise">
                     <i data-lucide="rotate-cw"></i>
                 </button>
-                <div class="toggle-group">
-                    <label class="toggle-label">
-                        <input type="checkbox" id="grayscale-toggle" checked>
-                        <span class="toggle-text">B&W</span>
-                    </label>
-                </div>
-                <div class="slider-group">
-                    <label>Brightness <span id="brightness-val">0</span></label>
-                    <input type="range" id="brightness" min="-100" max="100" value="0">
-                </div>
-                <div class="slider-group">
-                    <label>Contrast <span id="contrast-val">0</span></label>
-                    <input type="range" id="contrast" min="-100" max="100" value="0">
-                </div>
-                <div class="slider-group">
-                    <label>Text Threshold <span id="threshold-val">175</span></label>
-                    <input type="range" id="threshold" min="64" max="220" value="175">
-                </div>
-                <div class="slider-group">
-                    <label>Barcode Threshold <span id="barcode-threshold-val">200</span></label>
-                    <input type="range" id="barcode-threshold" min="128" max="250" value="200" title="Adjust if barcode is too thin or too thick">
-                </div>
-                <div class="slider-group">
-                    <label>Barcode Thinning (Erosion) <span id="barcode-erode-val">1</span></label>
-                    <input type="range" id="barcode-erode" min="0" max="3" value="1" title="0 = No thinning, 1 = Normal, 2+ = Extreme">
-                </div>
-                
-                <hr style="border: 0; border-top: 1px solid var(--border); margin: 0.5rem 0;">
-                
-                <div class="barcode-regen-group" style="display: flex; flex-direction: column; gap: 0.5rem;">
-                    <label class="toggle-label" style="display: flex; align-items: center; gap: 0.5rem;">
-                        <input type="checkbox" id="replace-barcode-toggle" checked>
-                        <span class="toggle-text" style="font-weight: 600;">Regenerate Digital Barcode</span>
-                    </label>
-                    <div id="barcode-edit-ui" style="display: flex; flex-direction: column; gap: 0.25rem;">
-                        <label style="font-size: 0.75rem; color: var(--text-muted);">Detected Value (Click to edit)</label>
-                        <input type="text" id="barcode-value-input" class="input-text" placeholder="No barcode detected" style="padding: 0.25rem 0.5rem; border-radius: 4px; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text);">
-                        <div id="barcode-preview-container" style="background: white; padding: 0.5rem; border-radius: 4px; display: flex; justify-content: center; min-height: 40px; margin-top: 0.25rem;">
-                            <canvas id="barcode-preview-canvas"></canvas>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="barcode-status" class="barcode-status" hidden></div>
+                <button id="settings-toggle" class="btn btn-outline" title="Show/Hide Advanced Settings">
+                    <i data-lucide="settings-2"></i>
+                    <span class="btn-text">Settings</span>
+                    <i id="settings-chevron" data-lucide="chevron-up"></i>
+                </button>
             </div>
 
-            <div class="control-group" style="margin-left: auto;">
+            <div id="advanced-controls" class="advanced-controls-wrapper" hidden>
+                <div class="control-group">
+                    <div class="toggle-group">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="grayscale-toggle" checked>
+                            <span class="toggle-text">B&W</span>
+                        </label>
+                    </div>
+                    <div class="slider-group">
+                        <label>Brightness <span id="brightness-val">0</span></label>
+                        <input type="range" id="brightness" min="-100" max="100" value="0">
+                    </div>
+                    <div class="slider-group">
+                        <label>Contrast <span id="contrast-val">0</span></label>
+                        <input type="range" id="contrast" min="-100" max="100" value="0">
+                    </div>
+                    <div class="slider-group">
+                        <label>Text Threshold <span id="threshold-val">175</span></label>
+                        <input type="range" id="threshold" min="64" max="220" value="175">
+                    </div>
+                    <div class="slider-group">
+                        <label>Barcode Threshold <span id="barcode-threshold-val">200</span></label>
+                        <input type="range" id="barcode-threshold" min="128" max="250" value="200" title="Adjust if barcode is too thin or too thick">
+                    </div>
+                    <div class="slider-group">
+                        <label>Barcode Thinning <span id="barcode-erode-val">1</span></label>
+                        <input type="range" id="barcode-erode" min="0" max="3" value="1" title="0 = No thinning, 1 = Normal, 2+ = Extreme">
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-group actions-right">
                 <button id="download-pdf" class="btn btn-outline" disabled>
                     <i data-lucide="download"></i>
-                    Download PDF
+                    <span class="btn-text">Download PDF</span>
                 </button>
                 <button id="print-current" class="btn btn-outline" disabled>
                     <i data-lucide="printer"></i>
-                    Print Current
+                    <span class="btn-text-mobile">Print</span>
                 </button>
                 <button id="print-all" class="btn btn-primary" disabled>
                     <i data-lucide="printer"></i>
-                    Print All
+                    <span class="btn-text-mobile">Print All</span>
                 </button>
             </div>
         </section>
     </div>
+
+    <!-- Hidden barcode preview canvas (for sidebar, kept for JS compatibility) -->
+    <canvas id="barcode-preview-canvas" style="display: none;"></canvas>
 
     <script type="module" src="./src/main.js"></script>
 </body>

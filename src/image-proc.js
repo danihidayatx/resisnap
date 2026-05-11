@@ -41,6 +41,57 @@ export class ImageProcessor {
   }
 
   /**
+   * Find the bounding box of non-white pixels to auto-crop blank margins.
+   * @param {HTMLCanvasElement} canvas
+   * @param {number} threshold - RGB value below which a pixel is considered non-white
+   * @returns {Object} {x, y, width, height}
+   */
+  static getAutoCropRect(canvas, threshold = 250) {
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+    const imageData = ctx.getImageData(0, 0, width, height);
+    const data = imageData.data;
+
+    let minX = width, minY = height, maxX = 0, maxY = 0;
+
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const i = (y * width + x) * 4;
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        const a = data[i + 3];
+
+        if (a > 10 && (r < threshold || g < threshold || b < threshold)) {
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        }
+      }
+    }
+
+    if (minX > maxX || minY > maxY) {
+      return { x: 0, y: 0, width, height };
+    }
+
+    // Add padding (30px at 3x scale is about 10px in PDF)
+    const padding = 30;
+    minX = Math.max(0, minX - padding);
+    minY = Math.max(0, minY - padding);
+    maxX = Math.min(width, maxX + padding);
+    maxY = Math.min(height, maxY + padding);
+
+    return {
+      x: minX,
+      y: minY,
+      width: maxX - minX,
+      height: maxY - minY
+    };
+  }
+
+  /**
    * Detect barcode bounding rectangles on the canvas using ZXing.
    * Works on a grayscale canvas before thresholding.
    * 

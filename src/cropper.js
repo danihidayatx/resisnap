@@ -9,14 +9,16 @@ export class CropManager {
     this.options = {
       viewMode: 1,
       dragMode: 'crop',
-      autoCropArea: 0.8,
+      autoCropArea: 1,
       restore: false,
       guides: true,
       center: true,
       highlight: false,
+      background: false,
       cropBoxMovable: true,
       cropBoxResizable: true,
       toggleDragModeOnDblclick: false,
+      zoomable: false,
       ...options
     };
   }
