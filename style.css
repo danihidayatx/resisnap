@@ -313,3 +313,39 @@ input[type="range"] {
 [hidden] {
   display: none !important;
 }
+
+/* Barcode Detection Status Badge */
+.barcode-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  margin-top: 0.25rem;
+}
+
+.barcode-status.detecting {
+  display: inline-flex;
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.barcode-status.found {
+  display: inline-flex;
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.barcode-status.fallback {
+  display: inline-flex;
+  background: #fff8e1;
+  color: #e65100;
+}
+
+.barcode-status.error {
+  display: inline-flex;
+  background: #fce4ec;
+  color: #b71c1c;
+}

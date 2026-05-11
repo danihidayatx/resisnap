@@ -66,6 +66,10 @@ export class CropManager {
     outputCanvas.height = height;
     const ctx = outputCanvas.getContext('2d');
     
+    // Fill with white to prevent transparency artifacts
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+    
     ctx.drawImage(
       canvas,
       x, y, width, height,

@@ -28,6 +28,10 @@ export class PdfRenderer {
     canvas.height = viewport.height;
     canvas.width = viewport.width;
 
+    // Fill with white to avoid transparent background issues during image processing
+    context.fillStyle = '#ffffff';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+
     const renderContext = {
       canvasContext: context,
       viewport: viewport,

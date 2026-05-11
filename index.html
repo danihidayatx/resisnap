@@ -80,6 +80,36 @@
                     <label>Contrast <span id="contrast-val">0</span></label>
                     <input type="range" id="contrast" min="-100" max="100" value="0">
                 </div>
+                <div class="slider-group">
+                    <label>Text Threshold <span id="threshold-val">175</span></label>
+                    <input type="range" id="threshold" min="64" max="220" value="175">
+                </div>
+                <div class="slider-group">
+                    <label>Barcode Threshold <span id="barcode-threshold-val">200</span></label>
+                    <input type="range" id="barcode-threshold" min="128" max="250" value="200" title="Adjust if barcode is too thin or too thick">
+                </div>
+                <div class="slider-group">
+                    <label>Barcode Thinning (Erosion) <span id="barcode-erode-val">1</span></label>
+                    <input type="range" id="barcode-erode" min="0" max="3" value="1" title="0 = No thinning, 1 = Normal, 2+ = Extreme">
+                </div>
+                
+                <hr style="border: 0; border-top: 1px solid var(--border); margin: 0.5rem 0;">
+                
+                <div class="barcode-regen-group" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <label class="toggle-label" style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" id="replace-barcode-toggle" checked>
+                        <span class="toggle-text" style="font-weight: 600;">Regenerate Digital Barcode</span>
+                    </label>
+                    <div id="barcode-edit-ui" style="display: flex; flex-direction: column; gap: 0.25rem;">
+                        <label style="font-size: 0.75rem; color: var(--text-muted);">Detected Value (Click to edit)</label>
+                        <input type="text" id="barcode-value-input" class="input-text" placeholder="No barcode detected" style="padding: 0.25rem 0.5rem; border-radius: 4px; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text);">
+                        <div id="barcode-preview-container" style="background: white; padding: 0.5rem; border-radius: 4px; display: flex; justify-content: center; min-height: 40px; margin-top: 0.25rem;">
+                            <canvas id="barcode-preview-canvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="barcode-status" class="barcode-status" hidden></div>
             </div>
 
             <div class="control-group" style="margin-left: auto;">

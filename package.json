@@ -12,7 +12,9 @@
     "vite": "^8.0.10"
   },
   "dependencies": {
+    "@zxing/library": "^0.23.0",
     "cropperjs": "^1.6.2",
+    "jsbarcode": "^3.12.3",
     "jspdf": "^4.2.1",
     "lucide": "^1.14.0",
     "pdfjs-dist": "^5.7.284"

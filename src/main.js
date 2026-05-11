@@ -5,6 +5,7 @@ import { ImageProcessor } from './image-proc';
 import { EscPosBuilder } from './escpos';
 import { UsbPrinter } from './usb-printer';
 import { jsPDF } from 'jspdf';
+import JsBarcode from 'jsbarcode';
 
 // Initialize Lucide icons
 createIcons({
@@ -21,9 +22,15 @@ const state = {
   brightness: 0,
   contrast: 0,
   grayscale: true,
+  textThreshold: 175,   // applied to text/non-barcode areas
+  barcodeThreshold: 200, // applied to detected barcode zones
+  barcodeErode: 1,       // erosion iterations in barcode zone (fixed)
   originalCanvases: [], // Original rendered canvases from PDF
   adjustedCanvases: [], // Canvases after brightness/contrast
   isCropping: false,
+  barcodeValue: '',
+  replaceBarcode: true,
+  detectedBarcodes: [],
 };
 
 // UI Elements
@@ -38,6 +45,16 @@ const els = {
   brightnessVal: document.getElementById('brightness-val'),
   contrastVal: document.getElementById('contrast-val'),
   grayscaleToggle: document.getElementById('grayscale-toggle'),
+  thresholdSlider: document.getElementById('threshold'),
+  thresholdVal: document.getElementById('threshold-val'),
+  barcodeThresholdSlider: document.getElementById('barcode-threshold'),
+  barcodeThresholdVal: document.getElementById('barcode-threshold-val'),
+  barcodeErodeSlider: document.getElementById('barcode-erode'),
+  barcodeErodeVal: document.getElementById('barcode-erode-val'),
+  barcodeStatus: document.getElementById('barcode-status'),
+  replaceBarcodeToggle: document.getElementById('replace-barcode-toggle'),
+  barcodeValueInput: document.getElementById('barcode-value-input'),
+  barcodePreviewCanvas: document.getElementById('barcode-preview-canvas'),
   connectBtn: document.getElementById('connect-printer'),
   printCurrentBtn: document.getElementById('print-current'),
   printAllBtn: document.getElementById('print-all'),
@@ -64,10 +81,17 @@ els.fileUpload.addEventListener('change', async (e) => {
     els.pageCount.textContent = numPages;
     state.currentPage = 1;
     state.rotation = 0;
+    state.barcodeValue = '';
+    els.barcodeValueInput.value = '';
+    updateBarcodePreview();
+    state.detectedBarcodes = [];
     
     await loadAllPages();
     renderThumbnails();
     displayCurrentPage();
+    
+    // Run early barcode detection on the first page
+    await detectBarcodeFromCurrentPage();
     
     els.printCurrentBtn.disabled = false;
     els.printAllBtn.disabled = false;
@@ -100,6 +124,53 @@ els.grayscaleToggle.addEventListener('change', (e) => {
   updateAdjustments();
 });
 
+els.thresholdSlider.addEventListener('input', (e) => {
+  state.textThreshold = parseInt(e.target.value);
+  els.thresholdVal.textContent = state.textThreshold;
+});
+
+els.barcodeThresholdSlider.addEventListener('input', (e) => {
+  state.barcodeThreshold = parseInt(e.target.value);
+  els.barcodeThresholdVal.textContent = state.barcodeThreshold;
+});
+
+els.barcodeErodeSlider.addEventListener('input', (e) => {
+  state.barcodeErode = parseInt(e.target.value);
+  els.barcodeErodeVal.textContent = state.barcodeErode;
+});
+
+els.replaceBarcodeToggle.addEventListener('change', (e) => {
+  state.replaceBarcode = e.target.checked;
+  document.getElementById('barcode-edit-ui').style.opacity = state.replaceBarcode ? '1' : '0.5';
+  document.getElementById('barcode-edit-ui').style.pointerEvents = state.replaceBarcode ? 'all' : 'none';
+});
+
+els.barcodeValueInput.addEventListener('input', (e) => {
+  state.barcodeValue = e.target.value;
+  updateBarcodePreview();
+});
+
+function updateBarcodePreview() {
+  if (!state.barcodeValue) {
+    const ctx = els.barcodePreviewCanvas.getContext('2d');
+    ctx.clearRect(0, 0, els.barcodePreviewCanvas.width, els.barcodePreviewCanvas.height);
+    return;
+  }
+  
+  try {
+    JsBarcode(els.barcodePreviewCanvas, state.barcodeValue, {
+      format: "CODE128",
+      displayValue: true,
+      fontSize: 14,
+      margin: 10,
+      width: 2,
+      height: 40
+    });
+  } catch (e) {
+    console.warn("Barcode preview failed:", e);
+  }
+}
+
 els.connectBtn.addEventListener('click', async () => {
   try {
     const name = await state.usbPrinter.connect();
@@ -127,6 +198,48 @@ async function loadAllPages() {
   for (let i = 1; i <= state.pdfRenderer.numPages; i++) {
     const canvas = await state.pdfRenderer.renderPage(i, 3); // High resolution for cropping
     state.originalCanvases.push(canvas);
+  }
+}
+
+async function detectBarcodeFromCurrentPage() {
+  const original = state.originalCanvases[state.currentPage - 1];
+  if (!original) return;
+
+  if (els.barcodeStatus) {
+    els.barcodeStatus.hidden = false;
+    els.barcodeStatus.textContent = '⏳ Detecting barcodes…';
+    els.barcodeStatus.className = 'barcode-status detecting';
+  }
+
+  try {
+    const barcodeRects = await ImageProcessor.detectBarcodeRects(original);
+    state.detectedBarcodes = barcodeRects;
+
+    if (barcodeRects.length > 0) {
+      // Use the first detected barcode value
+      const detectedValue = barcodeRects[0].value;
+      if (detectedValue) {
+        state.barcodeValue = detectedValue;
+        els.barcodeValueInput.value = detectedValue;
+        updateBarcodePreview();
+      }
+
+      if (els.barcodeStatus) {
+        els.barcodeStatus.textContent = `✅ ${barcodeRects.length} barcode(s) detected`;
+        els.barcodeStatus.className = 'barcode-status found';
+      }
+    } else {
+      if (els.barcodeStatus) {
+        els.barcodeStatus.textContent = '⚠️ No barcode detected — enter value manually';
+        els.barcodeStatus.className = 'barcode-status fallback';
+      }
+    }
+  } catch (e) {
+    console.warn('Early barcode detection failed:', e);
+    if (els.barcodeStatus) {
+      els.barcodeStatus.textContent = '⚠️ Detection failed — enter value manually';
+      els.barcodeStatus.className = 'barcode-status fallback';
+    }
   }
 }
 
@@ -177,20 +290,41 @@ function updateAdjustments() {
 function rotateCanvas(canvas, degrees) {
   if (degrees === 0) return canvas;
   
+  const W = canvas.width;
+  const H = canvas.height;
   const out = document.createElement('canvas');
   const ctx = out.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
   
   if (degrees === 90 || degrees === 270) {
-    out.width = canvas.height;
-    out.height = canvas.width;
+    out.width = H;
+    out.height = W;
   } else {
-    out.width = canvas.width;
-    out.height = canvas.height;
+    out.width = W;
+    out.height = H;
   }
   
-  ctx.translate(out.width / 2, out.height / 2);
-  ctx.rotate((degrees * Math.PI) / 180);
-  ctx.drawImage(canvas, -canvas.width / 2, -canvas.height / 2);
+  // Fill with white to prevent transparency artifacts
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, out.width, out.height);
+  
+  // Use setTransform with INTEGER-ONLY values for pixel-perfect rotation.
+  // The old translate(w/2, h/2) + rotate() approach caused fractional pixel
+  // positioning when dimensions were odd, triggering bilinear interpolation
+  // that blurred barcode bars and made them thicker.
+  if (degrees === 90) {
+    // 90° CW: src(x,y) → dst(H-1-y, x)
+    ctx.setTransform(0, 1, -1, 0, H, 0);
+  } else if (degrees === 180) {
+    // 180°: src(x,y) → dst(W-1-x, H-1-y)
+    ctx.setTransform(-1, 0, 0, -1, W, H);
+  } else if (degrees === 270) {
+    // 270° CW: src(x,y) → dst(y, W-1-x)
+    ctx.setTransform(0, -1, 1, 0, 0, W);
+  }
+  
+  ctx.drawImage(canvas, 0, 0);
+  ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset
   
   return out;
 }
@@ -207,31 +341,110 @@ async function printPages(pageNumbers) {
     return;
   }
 
+  // Update barcode status indicator
+  if (els.barcodeStatus) {
+    els.barcodeStatus.hidden = false;
+    els.barcodeStatus.textContent = '⏳ Detecting barcodes…';
+    els.barcodeStatus.className = 'barcode-status detecting';
+  }
+
   try {
-    const builder = new EscPosBuilder().init();
+    const builder = new EscPosBuilder().init()
+      .setLineSpacing(0); // No gaps between raster lines — critical for barcode readability
 
     for (const pageNum of pageNumbers) {
       const original = state.originalCanvases[pageNum - 1];
       const rotated = rotateCanvas(original, state.rotation);
-      
-      // We need to apply crop to the adjusted canvas
+
+      // Apply brightness/contrast/grayscale adjustments for PRINTING
       const adjusted = ImageProcessor.applyAdjustments(rotated, state.brightness, state.contrast, state.grayscale);
       const cropped = await state.cropManager.getCroppedCanvas(adjusted, cropData);
+
+      // Multi-step resize to 384px (58mm printer) — preserves barcode detail
+      const resized = ImageProcessor.resizeStepDown(cropped, 384);
+
+      // For DETECTION, use a clean crop without user's brightness/contrast adjustments
+      // High contrast/brightness often destroys barcode gaps, causing ZXing to fail.
+      const unadjustedCropped = await state.cropManager.getCroppedCanvas(rotated, cropData);
       
-      // Resize to 384px (58mm printer)
-      const resized = ImageProcessor.resizeToFit(cropped, 384);
-      
-      // Threshold
-      const mono = ImageProcessor.toMonochrome(resized, 128);
-      
+      // Detect barcode zones using ZXing on the high-res UNADJUSTED cropped canvas
+      const barcodeRectsRaw = await ImageProcessor.detectBarcodeRects(unadjustedCropped);
+
+      // Scale detected rects to the resized canvas (384px width)
+      const scaleFactor = resized.width / unadjustedCropped.width;
+      const barcodeRects = barcodeRectsRaw.map(r => ({
+        x: Math.round(r.x * scaleFactor),
+        y: Math.round(r.y * scaleFactor),
+        w: Math.round(r.w * scaleFactor),
+        h: Math.round(r.h * scaleFactor),
+        value: r.value
+      }));
+
+      // Update state with detected value if not already manually edited
+      if (barcodeRects.length > 0 && !state.barcodeValue) {
+        state.barcodeValue = barcodeRects[0].value;
+        els.barcodeValueInput.value = state.barcodeValue;
+        updateBarcodePreview();
+      }
+
+      if (els.barcodeStatus) {
+        if (barcodeRects.length > 0) {
+          els.barcodeStatus.textContent = `✅ ${barcodeRects.length} barcode(s) detected`;
+          els.barcodeStatus.className = 'barcode-status found';
+        } else {
+          els.barcodeStatus.textContent = '⚠️ No barcode detected — using heuristic zone';
+          els.barcodeStatus.className = 'barcode-status fallback';
+        }
+      }
+      // Barcode Replacement Logic — prepend digital barcode, keep original intact
+      if (state.replaceBarcode && state.barcodeValue) {
+        const bcCanvas = document.createElement('canvas');
+        bcCanvas.width = 384;
+        bcCanvas.height = 120;
+        const bcCtx = bcCanvas.getContext('2d');
+        bcCtx.fillStyle = '#ffffff';
+        bcCtx.fillRect(0, 0, 384, 120);
+        
+        try {
+          JsBarcode(bcCanvas, state.barcodeValue, {
+            format: "CODE128",
+            displayValue: true,
+            fontSize: 20,
+            margin: 10,
+            width: 2,
+            height: 70
+          });
+          
+          const bcMono = ImageProcessor.toMonochrome(bcCanvas, 128);
+          builder.rasterImage(bcMono.data, bcMono.width, bcMono.height)
+                 .feed(1);
+        } catch (e) {
+          console.warn("Replacement barcode generation failed:", e);
+        }
+      }
+
+      // Region-aware threshold: high threshold + erosion on barcode zones,
+      // normal threshold on text zones
+      const mono = ImageProcessor.toMonochromeRegionAware(
+        resized,
+        state.textThreshold,
+        barcodeRects,
+        state.barcodeThreshold,
+        state.barcodeErode
+      );
+
       builder.rasterImage(mono.data, mono.width, mono.height)
              .feed(3);
     }
-    
+
     builder.cut();
     await state.usbPrinter.print(builder.getBuffer());
   } catch (err) {
     console.error('Print failed:', err);
+    if (els.barcodeStatus) {
+      els.barcodeStatus.textContent = '❌ Print failed';
+      els.barcodeStatus.className = 'barcode-status error';
+    }
     alert('Printing failed. Check console for details.');
   }
 }
