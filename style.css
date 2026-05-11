@@ -151,6 +151,22 @@ body {
   border-radius: var(--radius);
   text-align: center;
   color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.drop-zone:hover {
+  border-color: var(--primary);
+  background-color: rgba(238, 77, 45, 0.05);
+  color: var(--primary);
+}
+
+.drop-zone.drag-over {
+  border-color: var(--primary);
+  background-color: rgba(238, 77, 45, 0.1);
+  color: var(--primary);
+  transform: scale(1.02);
 }
 
 /* ===== Live Barcode Preview ===== */

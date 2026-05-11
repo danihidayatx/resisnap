@@ -1,3 +1,8 @@
+/**
+ * @file Main entry point for the ResiSnap application.
+ * Handles UI interactions, PDF processing, and printer communication.
+ */
+
 import { createIcons, Printer, Usb, FileUp, RotateCw, FileText, Download, CheckCircle, Settings2, ChevronUp, ChevronDown } from 'lucide';
 import { PdfRenderer } from './pdf-renderer';
 import { CropManager } from './cropper';
@@ -43,6 +48,44 @@ createIcons({
  * @property {boolean} showAdvanced
  */
 
+/**
+ * @typedef {Object} AppElements
+ * @property {HTMLInputElement} fileUpload
+ * @property {HTMLElement} dropZone
+ * @property {HTMLElement} canvasWrapper
+ * @property {HTMLElement} thumbnailStrip
+ * @property {HTMLElement} pageCount
+ * @property {HTMLButtonElement} rotateBtn
+ * @property {HTMLInputElement} brightnessSlider
+ * @property {HTMLInputElement} contrastSlider
+ * @property {HTMLElement} brightnessVal
+ * @property {HTMLElement} contrastVal
+ * @property {HTMLInputElement} grayscaleToggle
+ * @property {HTMLInputElement} thresholdSlider
+ * @property {HTMLElement} thresholdVal
+ * @property {HTMLInputElement} barcodeThresholdSlider
+ * @property {HTMLElement} barcodeThresholdVal
+ * @property {HTMLInputElement} barcodeErodeSlider
+ * @property {HTMLElement} barcodeErodeVal
+ * @property {HTMLInputElement} replaceBarcodeToggle
+ * @property {HTMLInputElement} eraseOriginalToggle
+ * @property {HTMLInputElement} barcodeValueInput
+ * @property {HTMLCanvasElement} barcodePreviewCanvas
+ * @property {HTMLElement} liveBarcodePreview
+ * @property {HTMLCanvasElement} liveBarcodeCanvas
+ * @property {HTMLElement} liveBarcodeText
+ * @property {HTMLButtonElement} settingsToggle
+ * @property {HTMLElement} advancedControls
+ * @property {HTMLElement} settingsChevron
+ * @property {HTMLButtonElement} connectBtn
+ * @property {HTMLButtonElement} printCurrentBtn
+ * @property {HTMLButtonElement} printAllBtn
+ * @property {HTMLButtonElement} downloadBtn
+ * @property {HTMLElement} printerStatusDot
+ * @property {HTMLElement} printerStatusText
+ * @property {HTMLElement} browserWarning
+ */
+
 /** @type {AppState} */
 const state = {
   pdfRenderer: new PdfRenderer(),
@@ -67,8 +110,10 @@ const state = {
   showAdvanced: false,
 };
 
+/** @type {AppElements} */
 const els = {
   fileUpload: document.getElementById('file-upload'),
+  dropZone: document.getElementById('drop-zone'),
   canvasWrapper: document.getElementById('canvas-wrapper'),
   thumbnailStrip: document.getElementById('thumbnail-strip'),
   pageCount: document.getElementById('page-count'),
@@ -112,9 +157,17 @@ if (!navigator.usb) {
 
 // --- Event Handlers ---
 
-els.fileUpload.addEventListener('change', async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+/**
+ * Handles a PDF file for processing.
+ * @param {File} file 
+ */
+async function handleFile(file) {
+  if (!file || file.type !== 'application/pdf') {
+    if (file && file.type !== 'application/pdf') {
+      Toast.error('Please upload a PDF file.', 'Invalid File');
+    }
+    return;
+  }
 
   try {
     const numPages = await state.pdfRenderer.loadPdf(file);
@@ -139,6 +192,46 @@ els.fileUpload.addEventListener('change', async (e) => {
     console.error('Error loading PDF:', err);
     Toast.error('Failed to load PDF. Please try another file.', 'PDF Error');
   }
+}
+
+els.fileUpload.addEventListener('change', (e) => {
+  handleFile(e.target.files[0]);
+});
+
+if (els.dropZone) {
+  els.dropZone.addEventListener('click', () => {
+    els.fileUpload.click();
+  });
+}
+
+// Global Drag and Drop
+let dragCounter = 0;
+
+window.addEventListener('dragenter', (e) => {
+  e.preventDefault();
+  dragCounter++;
+  if (els.dropZone) els.dropZone.classList.add('drag-over');
+});
+
+window.addEventListener('dragover', (e) => {
+  e.preventDefault();
+});
+
+window.addEventListener('dragleave', (e) => {
+  e.preventDefault();
+  dragCounter--;
+  if (dragCounter === 0) {
+    if (els.dropZone) els.dropZone.classList.remove('drag-over');
+  }
+});
+
+window.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dragCounter = 0;
+  if (els.dropZone) els.dropZone.classList.remove('drag-over');
+  
+  const file = e.dataTransfer.files[0];
+  handleFile(file);
 });
 
 els.rotateBtn.addEventListener('click', () => {
