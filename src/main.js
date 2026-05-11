@@ -31,6 +31,7 @@ const state = {
   barcodeValue: '',
   replaceBarcode: true,
   detectedBarcodes: [],
+  printerWidthPx: 384, // 58mm=384, 80mm=576, 100mm=720 (at 203dpi)
 };
 
 // UI Elements
@@ -143,6 +144,15 @@ els.replaceBarcodeToggle.addEventListener('change', (e) => {
   state.replaceBarcode = e.target.checked;
   document.getElementById('barcode-edit-ui').style.opacity = state.replaceBarcode ? '1' : '0.5';
   document.getElementById('barcode-edit-ui').style.pointerEvents = state.replaceBarcode ? 'all' : 'none';
+});
+
+// Paper width selector
+const paperWidthMap = { '58': 384, '80': 576, '100': 720 };
+document.querySelectorAll('input[name="paper-width"]').forEach(radio => {
+  radio.addEventListener('change', (e) => {
+    state.printerWidthPx = paperWidthMap[e.target.value] || 384;
+    console.log(`Paper width set to ${e.target.value}mm (${state.printerWidthPx}px)`);
+  });
 });
 
 els.barcodeValueInput.addEventListener('input', (e) => {
@@ -360,8 +370,8 @@ async function printPages(pageNumbers) {
       const adjusted = ImageProcessor.applyAdjustments(rotated, state.brightness, state.contrast, state.grayscale);
       const cropped = await state.cropManager.getCroppedCanvas(adjusted, cropData);
 
-      // Multi-step resize to 384px (58mm printer) — preserves barcode detail
-      const resized = ImageProcessor.resizeStepDown(cropped, 384);
+      // Multi-step resize to printer width — preserves barcode detail
+      const resized = ImageProcessor.resizeStepDown(cropped, state.printerWidthPx);
 
       // For DETECTION, use a clean crop without user's brightness/contrast adjustments
       // High contrast/brightness often destroys barcode gaps, causing ZXing to fail.
@@ -398,12 +408,13 @@ async function printPages(pageNumbers) {
       }
       // Barcode Replacement Logic — prepend digital barcode, keep original intact
       if (state.replaceBarcode && state.barcodeValue) {
+        const pw = state.printerWidthPx;
         const bcCanvas = document.createElement('canvas');
-        bcCanvas.width = 384;
+        bcCanvas.width = pw;
         bcCanvas.height = 120;
         const bcCtx = bcCanvas.getContext('2d');
         bcCtx.fillStyle = '#ffffff';
-        bcCtx.fillRect(0, 0, 384, 120);
+        bcCtx.fillRect(0, 0, pw, 120);
         
         try {
           JsBarcode(bcCanvas, state.barcodeValue, {

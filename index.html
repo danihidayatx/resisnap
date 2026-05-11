@@ -24,6 +24,18 @@
                     <span id="printer-status-dot" class="dot"></span>
                     <span id="printer-status-text">Printer Disconnected</span>
                 </div>
+                <div class="paper-width-selector" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0.75rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-secondary);">
+                    <span style="font-size: 0.75rem; color: var(--text-muted); white-space: nowrap;">Lebar:</span>
+                    <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 0.2rem; cursor: pointer;">
+                        <input type="radio" name="paper-width" value="58" checked> 58mm
+                    </label>
+                    <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 0.2rem; cursor: pointer;">
+                        <input type="radio" name="paper-width" value="80"> 80mm
+                    </label>
+                    <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 0.2rem; cursor: pointer;">
+                        <input type="radio" name="paper-width" value="100"> 100mm
+                    </label>
+                </div>
                 <button id="connect-printer" class="btn btn-outline">
                     <i data-lucide="usb"></i>
                     Connect Printer
