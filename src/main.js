@@ -3,7 +3,7 @@
  * Multi-marketplace thermal printer tool for Tokopedia, Shopee, and others.
  */
 
-import { createIcons, Printer, Usb, FileUp, RotateCw, FileText, Download, CheckCircle, Settings2, ChevronUp, ChevronDown, HelpCircle, Info } from 'lucide';
+import { createIcons, Printer, Usb, FileUp, RotateCw, FileText, Download, CheckCircle, Settings2, ChevronUp, ChevronDown, HelpCircle, Info, X } from 'lucide';
 import { PdfRenderer } from './pdf-renderer';
 import { CropManager } from './cropper';
 import { ImageProcessor } from './image-proc';
@@ -17,7 +17,7 @@ import { rotateCanvas } from './canvas-utils';
 import { loadAllPages, downloadCroppedPdf } from './pdf-handler';
 import { printPages } from './print-handler';
 
-const lucideIcons = { Printer, Usb, FileUp, RotateCw, FileText, Download, CheckCircle, Settings2, ChevronUp, ChevronDown, HelpCircle, Info };
+const lucideIcons = { Printer, Usb, FileUp, RotateCw, FileText, Download, CheckCircle, Settings2, ChevronUp, ChevronDown, HelpCircle, Info, X };
 
 // Initialize Lucide icons
 createIcons({
@@ -147,12 +147,77 @@ const els = {
   printerStatusDot: document.getElementById('printer-status-dot'),
   printerStatusText: document.getElementById('printer-status-text'),
   browserWarning: document.getElementById('browser-warning'),
+
+  // Modal Elements
+  modalOverlay: document.getElementById('modal-overlay'),
+  modalTitle: document.getElementById('modal-title'),
+  modalBody: document.getElementById('modal-body'),
+  modalClose: document.getElementById('modal-close'),
+  howToBtn: document.getElementById('how-to-btn'),
+  privacyLink: document.getElementById('privacy-link'),
+  termsLink: document.getElementById('terms-link'),
 };
 
 // Check Browser Support
 if (!navigator.usb) {
   els.browserWarning.hidden = false;
   els.connectBtn.disabled = true;
+}
+
+// --- Modal Logic ---
+
+/**
+ * Opens a modal with the specified title and content from a template.
+ * @param {string} title 
+ * @param {string} templateId 
+ */
+function openModal(title, templateId) {
+  if (!els.modalOverlay || !els.modalTitle || !els.modalBody) return;
+  
+  els.modalTitle.textContent = title;
+  const template = document.getElementById(templateId);
+  if (template) {
+    els.modalBody.innerHTML = '';
+    els.modalBody.appendChild(template.content.cloneNode(true));
+  }
+  
+  els.modalOverlay.hidden = false;
+  createIcons({ icons: lucideIcons });
+}
+
+if (els.modalClose) {
+  els.modalClose.onclick = () => {
+    els.modalOverlay.hidden = true;
+  };
+}
+
+if (els.modalOverlay) {
+  els.modalOverlay.onclick = (e) => {
+    if (e.target === els.modalOverlay) {
+      els.modalOverlay.hidden = true;
+    }
+  };
+}
+
+if (els.howToBtn) {
+  els.howToBtn.onclick = (e) => {
+    e.preventDefault();
+    openModal('Cara Penggunaan', 'how-to-template');
+  };
+}
+
+if (els.privacyLink) {
+  els.privacyLink.onclick = (e) => {
+    e.preventDefault();
+    openModal('Kebijakan Privasi', 'privacy-template');
+  };
+}
+
+if (els.termsLink) {
+  els.termsLink.onclick = (e) => {
+    e.preventDefault();
+    openModal('Syarat & Ketentuan', 'terms-template');
+  };
 }
 
 // --- Event Handlers ---

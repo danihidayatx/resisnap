@@ -26,6 +26,10 @@
                         <i data-lucide="help-circle"></i>
                         <span>Cara Pakai</span>
                     </a>
+                    <a href="https://github.com/danihidayatx/resisnap" target="_blank" class="nav-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide-icon"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+                        <span>GitHub</span>
+                    </a>
                 </nav>
             </div>
             <div class="actions">
@@ -182,6 +186,61 @@
 
     <!-- Hidden barcode preview canvas (for sidebar, kept for JS compatibility) -->
     <canvas id="barcode-preview-canvas" style="display: none;"></canvas>
+
+    <!-- Modal Container -->
+    <div id="modal-overlay" class="modal-overlay" hidden>
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2 id="modal-title">Judul Modal</h2>
+                <button id="modal-close" class="btn-icon">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div id="modal-body" class="modal-body">
+                <!-- Content will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Templates (Hidden) -->
+    <template id="how-to-template">
+        <div class="content-text">
+            <h3>Cara Menggunakan ResiSnap</h3>
+            <ol>
+                <li><strong>Unggah PDF:</strong> Klik tombol "Unggah PDF" atau seret file PDF resi Anda ke area kotak.</li>
+                <li><strong>Sesuaikan:</strong> Gunakan fitur *crop* untuk memilih area resi yang ingin dicetak.</li>
+                <li><strong>Optimasi Barcode:</strong> ResiSnap akan mendeteksi barcode secara otomatis. Anda bisa mengaktifkan "Buat Ulang" untuk hasil cetak barcode yang lebih tajam.</li>
+                <li><strong>Atur Kualitas:</strong> Gunakan slider Kecerahan dan Kontras jika hasil cetak terlalu pudar atau terlalu gelap.</li>
+                <li><strong>Cetak:</strong> Pastikan printer thermal Anda terhubung via USB, lalu klik "Cetak".</li>
+            </ol>
+        </div>
+    </template>
+
+    <template id="privacy-template">
+        <div class="content-text">
+            <h3>Kebijakan Privasi</h3>
+            <p>Privasi Anda adalah prioritas kami. Berikut adalah ringkasan kebijakan privasi ResiSnap:</p>
+            <ul>
+                <li><strong>Pemrosesan Lokal:</strong> Semua pemrosesan PDF dan gambar dilakukan secara langsung di browser Anda (client-side).</li>
+                <li><strong>Tanpa Penyimpanan Server:</strong> File Anda tidak pernah diunggah atau disimpan di server kami.</li>
+                <li><strong>Data Barcode:</strong> Data barcode yang dideteksi hanya digunakan untuk proses pembuatan ulang barcode secara lokal untuk tujuan pencetakan.</li>
+                <li><strong>Keamanan:</strong> Karena aplikasi berjalan sepenuhnya di perangkat Anda, data Anda tetap berada dalam kendali Anda sepenuhnya.</li>
+            </ul>
+        </div>
+    </template>
+
+    <template id="terms-template">
+        <div class="content-text">
+            <h3>Syarat & Ketentuan</h3>
+            <p>Dengan menggunakan ResiSnap, Anda setuju dengan ketentuan berikut:</p>
+            <ul>
+                <li><strong>Penggunaan:</strong> Alat ini disediakan "sebagaimana adanya" (as is) tanpa jaminan dalam bentuk apa pun.</li>
+                <li><strong>Tanggung Jawab:</strong> Kami tidak bertanggung jawab atas kesalahan cetak, kerusakan printer, atau kerugian lain yang mungkin timbul dari penggunaan alat ini.</li>
+                <li><strong>Open Source:</strong> ResiSnap adalah proyek open-source. Anda diizinkan untuk melihat, memodifikasi, dan berkontribusi pada kode sumber melalui GitHub.</li>
+                <li><strong>Kepatuhan:</strong> Pastikan Anda menggunakan alat ini sesuai dengan kebijakan marketplace masing-masing (Shopee, Tokopedia, dll).</li>
+            </ul>
+        </div>
+    </template>
 
     <script type="module" src="./src/main.js"></script>
 </body>
