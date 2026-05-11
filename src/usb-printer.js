@@ -1,9 +1,19 @@
+/**
+ * Manages WebUSB communication with a thermal printer.
+ */
 export class UsbPrinter {
   constructor() {
+    /** @type {USBDevice|null} */
     this.device = null;
+    /** @type {number|null} */
     this.endpointNumber = null;
   }
 
+  /**
+   * Requests a USB device and establishes a connection.
+   * @returns {Promise<string>} The product name of the connected printer.
+   * @throws {Error} If no bulk out endpoint is found or connection fails.
+   */
   async connect() {
     try {
       this.device = await navigator.usb.requestDevice({
@@ -31,6 +41,11 @@ export class UsbPrinter {
     }
   }
 
+  /**
+   * Transfers data to the printer.
+   * @param {Uint8Array} data - The ESC/POS command buffer to send.
+   * @throws {Error} If the printer is not connected.
+   */
   async print(data) {
     if (!this.device) {
       throw new Error('Printer not connected');
@@ -44,6 +59,9 @@ export class UsbPrinter {
     }
   }
 
+  /**
+   * Closes the USB connection.
+   */
   async disconnect() {
     if (this.device) {
       await this.device.close();
@@ -51,6 +69,10 @@ export class UsbPrinter {
     }
   }
 
+  /**
+   * Returns true if a printer is currently connected.
+   * @type {boolean}
+   */
   get isConnected() {
     return !!this.device;
   }

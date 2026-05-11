@@ -1,11 +1,21 @@
 import Cropper from 'cropperjs';
 import 'cropperjs/dist/cropper.css';
 
+/**
+ * Manages the Cropper.js instance for image cropping.
+ */
 export class CropManager {
+  /**
+   * @param {string} elementId - The ID of the element to attach the cropper to (legacy, not strictly used in current init).
+   * @param {Object} [options={}] - Custom Cropper.js options.
+   */
   constructor(elementId, options = {}) {
     this.elementId = elementId;
+    /** @type {Cropper|null} */
     this.cropper = null;
+    /** @type {Object|null} */
     this.cropData = null;
+    /** @type {Object} */
     this.options = {
       viewMode: 1,
       dragMode: 'crop',
@@ -23,6 +33,10 @@ export class CropManager {
     };
   }
 
+  /**
+   * Initializes the cropper on a given image element.
+   * @param {HTMLImageElement|HTMLCanvasElement} imageElement - The element to crop.
+   */
   init(imageElement) {
     if (this.cropper) {
       this.cropper.destroy();
@@ -40,6 +54,10 @@ export class CropManager {
     });
   }
 
+  /**
+   * Manually sets the crop data.
+   * @param {Object} data - Cropper.js data object {x, y, width, height, ...}.
+   */
   setCropData(data) {
     this.cropData = data;
     if (this.cropper) {
@@ -47,10 +65,17 @@ export class CropManager {
     }
   }
 
+  /**
+   * Returns the current crop data.
+   * @returns {Object|null}
+   */
   getCropData() {
     return this.cropData || (this.cropper ? this.cropper.getData() : null);
   }
 
+  /**
+   * Destroys the cropper instance.
+   */
   destroy() {
     if (this.cropper) {
       this.cropper.destroy();
@@ -58,6 +83,13 @@ export class CropManager {
     }
   }
 
+  /**
+   * Manually crops a canvas based on provided crop data.
+   * @param {HTMLCanvasElement} canvas - The source canvas.
+   * @param {Object} cropData - { x, y, width, height }
+   * @param {number} [rotation=0] - Legacy param, not used.
+   * @returns {Promise<HTMLCanvasElement>} The cropped canvas.
+   */
   async getCroppedCanvas(canvas, cropData, rotation = 0) {
     // Manually crop a canvas based on cropData
     // cropData: { x, y, width, height, rotate, scaleX, scaleY }

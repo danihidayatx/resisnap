@@ -9,7 +9,18 @@ import {
   BarcodeFormat,
 } from '@zxing/library';
 
+/**
+ * Static utility class for image processing, barcode detection, and monochrome conversion.
+ */
 export class ImageProcessor {
+  /**
+   * Applies brightness, contrast, and optional grayscale filters to a canvas.
+   * @param {HTMLCanvasElement} canvas - The source canvas.
+   * @param {number} brightness - Brightness adjustment (-100 to 100).
+   * @param {number} contrast - Contrast adjustment (-100 to 100).
+   * @param {boolean} [grayscale=false] - Whether to convert to grayscale.
+   * @returns {HTMLCanvasElement} A new canvas with adjustments applied.
+   */
   static applyAdjustments(canvas, brightness, contrast, grayscale = false) {
     const ctx = canvas.getContext('2d');
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -42,9 +53,9 @@ export class ImageProcessor {
 
   /**
    * Find the bounding box of non-white pixels to auto-crop blank margins.
-   * @param {HTMLCanvasElement} canvas
-   * @param {number} threshold - RGB value below which a pixel is considered non-white
-   * @returns {Object} {x, y, width, height}
+   * @param {HTMLCanvasElement} canvas - The source canvas.
+   * @param {number} [threshold=230] - Luminance value below which a pixel is considered non-white.
+   * @returns {{x: number, y: number, width: number, height: number}} The bounding box rect.
    */
   static getAutoCropRect(canvas, threshold = 230) {
     const ctx = canvas.getContext('2d');
@@ -95,14 +106,9 @@ export class ImageProcessor {
   }
 
   /**
-   * Detect barcode bounding rectangles on the canvas using ZXing.
-   * Works on a grayscale canvas before thresholding.
-   * 
-   * Returns array of { x, y, w, h } in canvas pixel coords.
-   * If nothing is detected, returns empty array (fallback heuristic applies).
-   * 
-   * @param {HTMLCanvasElement} canvas
-   * @returns {Promise<Array<{x,y,w,h}>>}
+   * Detect barcode bounding rectangles on the canvas using native API or ZXing fallback.
+   * @param {HTMLCanvasElement} canvas - The source canvas.
+   * @returns {Promise<Array<{x: number, y: number, w: number, h: number, value: string, format: string}>>} Array of detected barcodes.
    */
   static async detectBarcodeRects(canvas) {
     const width = canvas.width;
@@ -275,19 +281,13 @@ export class ImageProcessor {
 
   /**
    * Monochrome conversion with region-aware processing.
-   * 
-   * - textThreshold  : applied to the entire image first
-   * - barcodeRects   : areas to re-process with barcode-specific settings
-   * - barcodeThreshold + barcodeErode : applied only within barcode zones
-   * 
-   * If barcodeRects is empty, falls back to heuristic:
-   *   top 40% of image is treated as barcode zone.
-   * 
-   * @param {HTMLCanvasElement} canvas
-   * @param {number} textThreshold   - default 175
-   * @param {Array}  barcodeRects    - [{x,y,w,h}] from detectBarcodeRects
-   * @param {number} barcodeThreshold - default 200
-   * @param {number} barcodeErode    - erosion iterations in barcode zone, default 1
+   * Applies different thresholds to text zones and detected barcode zones.
+   * @param {HTMLCanvasElement} canvas - The source canvas.
+   * @param {number} [textThreshold=175] - Threshold for non-barcode areas.
+   * @param {Array<{x: number, y: number, w: number, h: number}>} [barcodeRects=[]] - Areas to process as barcodes.
+   * @param {number} [barcodeThreshold=200] - Threshold for barcode zones.
+   * @param {number} [barcodeErode=1] - Erosion iterations for barcode zones.
+   * @returns {{data: Uint8Array, width: number, height: number}} Monochrome data.
    */
   static toMonochromeRegionAware(
     canvas,
@@ -337,8 +337,6 @@ export class ImageProcessor {
         
         if (erodeGlobal) {
           // Global erosion fallback (user forced erosion despite no detection)
-          // We only erode vertically (checking top/bottom pixels) to thin
-          // horizontal bleeding without destroying thin vertical text strokes!
           for (let y = 1; y < height - 1; y++) {
             for (let x = 1; x < width - 1; x++) {
               const idx = y * width + x;
@@ -387,7 +385,10 @@ export class ImageProcessor {
   }
 
   /**
-   * Simple global threshold (kept as fallback / for non-barcode pages).
+   * Simple global thresholding conversion.
+   * @param {HTMLCanvasElement} canvas - The source canvas.
+   * @param {number} [threshold=175] - The threshold value.
+   * @returns {{data: Uint8Array, width: number, height: number}} Monochrome data.
    */
   static toMonochrome(canvas, threshold = 175) {
     const ctx = canvas.getContext('2d');
@@ -404,8 +405,10 @@ export class ImageProcessor {
   }
 
   /**
-   * Multi-step downscale: halves dimensions iteratively to preserve
-   * barcode line detail better than a single large-ratio resize.
+   * Multi-step downscale: halves dimensions iteratively to preserve detail.
+   * @param {HTMLCanvasElement} canvas - The source canvas.
+   * @param {number} [maxWidth=384] - The target maximum width.
+   * @returns {HTMLCanvasElement} The resized canvas.
    */
   static resizeStepDown(canvas, maxWidth = 384) {
     if (canvas.width <= maxWidth) return canvas;

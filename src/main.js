@@ -15,7 +15,31 @@ createIcons({
   icons: lucideIcons
 });
 
-// App State
+/**
+ * @typedef {Object} AppState
+ * @property {PdfRenderer} pdfRenderer
+ * @property {CropManager} cropManager
+ * @property {UsbPrinter} usbPrinter
+ * @property {number} currentPage
+ * @property {number} rotation
+ * @property {number} brightness
+ * @property {number} contrast
+ * @property {boolean} grayscale
+ * @property {number} textThreshold
+ * @property {number} barcodeThreshold
+ * @property {number} barcodeErode
+ * @property {HTMLCanvasElement[]} originalCanvases
+ * @property {HTMLCanvasElement[]} adjustedCanvases
+ * @property {boolean} isCropping
+ * @property {string} barcodeValue
+ * @property {boolean} replaceBarcode
+ * @property {Object[]} detectedBarcodes
+ * @property {number} printerWidthPx
+ * @property {boolean} eraseOriginalBarcode
+ * @property {boolean} showAdvanced
+ */
+
+/** @type {AppState} */
 const state = {
   pdfRenderer: new PdfRenderer(),
   cropManager: new CropManager(),
@@ -39,7 +63,10 @@ const state = {
   showAdvanced: false,
 };
 
-// UI Elements
+/**
+ * UI elements object.
+ * @type {Object.<string, HTMLElement>}
+ */
 const els = {
   fileUpload: document.getElementById('file-upload'),
   canvasWrapper: document.getElementById('canvas-wrapper'),
@@ -185,6 +212,9 @@ els.settingsToggle.addEventListener('click', () => {
   createIcons({ icons: lucideIcons }); // Re-render Lucide icons
 });
 
+/**
+ * Updates the barcode preview UI based on the current state.
+ */
 function updateBarcodePreview() {
   const hasValue = !!state.barcodeValue;
   
@@ -232,6 +262,10 @@ els.downloadBtn.addEventListener('click', downloadCroppedPdf);
 
 // --- Core Functions ---
 
+/**
+ * Loads all pages from the current PDF renderer and auto-crops white margins.
+ * @returns {Promise<void>}
+ */
 async function loadAllPages() {
   state.originalCanvases = [];
   for (let i = 1; i <= state.pdfRenderer.numPages; i++) {
@@ -255,11 +289,13 @@ async function loadAllPages() {
   }
 }
 
+/**
+ * Detects barcodes from the current page and updates the state.
+ * @returns {Promise<void>}
+ */
 async function detectBarcodeFromCurrentPage() {
   const original = state.originalCanvases[state.currentPage - 1];
   if (!original) return;
-
-
 
   try {
     const barcodeRects = await ImageProcessor.detectBarcodeRects(original);
@@ -273,15 +309,16 @@ async function detectBarcodeFromCurrentPage() {
         els.barcodeValueInput.value = detectedValue;
         updateBarcodePreview();
       }
-
-    } else {
     }
   } catch (e) {
     console.warn('Early barcode detection failed:', e);
-
   }
 }
 
+/**
+ * Renders page thumbnails in the thumbnail strip.
+ * @returns {Promise<void>}
+ */
 async function renderThumbnails() {
   els.thumbnailStrip.innerHTML = '';
   for (let i = 0; i < state.originalCanvases.length; i++) {
@@ -303,6 +340,9 @@ async function renderThumbnails() {
   }
 }
 
+/**
+ * Displays the current page in the main canvas area with adjustments and cropper.
+ */
 function displayCurrentPage() {
   const original = state.originalCanvases[state.currentPage - 1];
   if (!original) return;
@@ -333,12 +373,21 @@ function displayCurrentPage() {
   state.cropManager.init(adjusted);
 }
 
+/**
+ * Re-renders the current page to reflect slider adjustments.
+ */
 function updateAdjustments() {
   // To avoid lag, we only update the display if cropper is active
   // but for simplicity here we re-render current page
   displayCurrentPage();
 }
 
+/**
+ * Rotates a canvas by specified degrees using pixel-perfect integer transforms.
+ * @param {HTMLCanvasElement} canvas - Source canvas.
+ * @param {number} degrees - Rotation in degrees (90, 180, 270).
+ * @returns {HTMLCanvasElement} Rotated canvas.
+ */
 function rotateCanvas(canvas, degrees) {
   if (degrees === 0) return canvas;
   
@@ -361,9 +410,6 @@ function rotateCanvas(canvas, degrees) {
   ctx.fillRect(0, 0, out.width, out.height);
   
   // Use setTransform with INTEGER-ONLY values for pixel-perfect rotation.
-  // The old translate(w/2, h/2) + rotate() approach caused fractional pixel
-  // positioning when dimensions were odd, triggering bilinear interpolation
-  // that blurred barcode bars and made them thicker.
   if (degrees === 90) {
     // 90° CW: src(x,y) → dst(H-1-y, x)
     ctx.setTransform(0, 1, -1, 0, H, 0);
@@ -381,6 +427,11 @@ function rotateCanvas(canvas, degrees) {
   return out;
 }
 
+/**
+ * Processes and prints specified pages to the thermal printer.
+ * @param {number[]} pageNumbers - Array of 1-based page numbers.
+ * @returns {Promise<void>}
+ */
 async function printPages(pageNumbers) {
   if (!state.usbPrinter.isConnected) {
     Toast.warn('Please connect a printer first.', 'Printer Offline', 0);
@@ -392,8 +443,6 @@ async function printPages(pageNumbers) {
     Toast.warn('Please draw a crop selection first.', 'Missing Selection', 0);
     return;
   }
-
-
 
   try {
     const builder = new EscPosBuilder().init()
@@ -411,7 +460,6 @@ async function printPages(pageNumbers) {
       const resized = ImageProcessor.resizeStepDown(cropped, state.printerWidthPx);
 
       // For DETECTION, use a clean crop without user's brightness/contrast adjustments
-      // High contrast/brightness often destroys barcode gaps, causing ZXing to fail.
       const unadjustedCropped = await state.cropManager.getCroppedCanvas(rotated, cropData);
       
       // Detect barcode zones using ZXing on the high-res UNADJUSTED cropped canvas
@@ -433,7 +481,6 @@ async function printPages(pageNumbers) {
         els.barcodeValueInput.value = state.barcodeValue;
         updateBarcodePreview();
       }
-
 
       // Barcode Replacement Logic — prepend digital barcode, keep original intact
       if (state.replaceBarcode && state.barcodeValue) {
@@ -463,7 +510,7 @@ async function printPages(pageNumbers) {
         }
       }
 
-      // 2. Optional: Erase original barcode from receipt canvas
+      // Optional: Erase original barcode from receipt canvas
       if (state.eraseOriginalBarcode && barcodeRects.length > 0) {
         const resizedCtx = resized.getContext('2d');
         resizedCtx.fillStyle = '#ffffff';
@@ -472,8 +519,7 @@ async function printPages(pageNumbers) {
         }
       }
 
-      // Region-aware threshold: high threshold + erosion on barcode zones,
-      // normal threshold on text zones
+      // Region-aware threshold
       const mono = ImageProcessor.toMonochromeRegionAware(
         resized,
         state.textThreshold,
@@ -494,6 +540,10 @@ async function printPages(pageNumbers) {
   }
 }
 
+/**
+ * Generates and downloads a PDF containing all cropped and adjusted pages.
+ * @returns {Promise<void>}
+ */
 async function downloadCroppedPdf() {
   const cropData = state.cropManager.getCropData();
   if (!cropData) return Toast.warn('Select crop first', 'Missing Selection');
