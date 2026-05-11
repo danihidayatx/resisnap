@@ -1029,3 +1029,81 @@ input[type="range"] {
     width: 100%;
   }
 }
+
+/* ===== Printer Selection ===== */
+.printer-select-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  padding: 0.5rem 0;
+}
+
+.printer-option-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem 1rem;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.printer-option-btn i {
+  width: 48px;
+  height: 48px;
+  color: var(--text-muted);
+  transition: color 0.2s;
+}
+
+.printer-option-btn:hover {
+  border-color: var(--primary);
+  background-color: rgba(238, 77, 45, 0.05);
+}
+
+.printer-option-btn:hover i {
+  color: var(--primary);
+}
+
+.option-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.option-title {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.option-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  .printer-select-options {
+    grid-template-columns: 1fr;
+  }
+  
+  .printer-option-btn {
+    flex-direction: row;
+    padding: 1rem;
+    justify-content: flex-start;
+  }
+  
+  .printer-option-btn i {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .option-text {
+    align-items: flex-start;
+  }
+}

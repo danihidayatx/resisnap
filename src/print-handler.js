@@ -13,7 +13,7 @@ import { Toast } from './toast';
  * @returns {Promise<void>}
  */
 export async function printPages(state, pageNumbers, onBarcodeDetected) {
-  if (!state.usbPrinter.isConnected) {
+  if (!state.activePrinter || !state.activePrinter.isConnected) {
     Toast.warn('Please connect a printer first.', 'Printer Offline', 0);
     return;
   }
@@ -102,7 +102,7 @@ export async function printPages(state, pageNumbers, onBarcodeDetected) {
     }
 
     builder.cut();
-    await state.usbPrinter.print(builder.getBuffer());
+    await state.activePrinter.print(builder.getBuffer());
   } catch (err) {
     console.error('Print failed:', err);
     Toast.error('Printing failed. Check console for details.', 'Print Error');

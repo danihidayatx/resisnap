@@ -8,7 +8,9 @@ import { PdfRenderer } from './pdf-renderer';
 import { CropManager } from './cropper';
 import { ImageProcessor } from './image-proc';
 import { UsbPrinter } from './usb-printer';
+import { BluetoothPrinter } from './bluetooth-printer';
 import { Toast } from './toast';
+import { Bluetooth } from 'lucide';
 import JsBarcode from 'jsbarcode';
 
 // New modules
@@ -17,7 +19,7 @@ import { rotateCanvas } from './canvas-utils';
 import { loadAllPages, downloadCroppedPdf } from './pdf-handler';
 import { printPages } from './print-handler';
 
-const lucideIcons = { Printer, Usb, FileUp, RotateCw, FileText, Download, CheckCircle, Settings2, ChevronUp, ChevronDown, HelpCircle, Info, X };
+const lucideIcons = { Printer, Usb, Bluetooth, FileUp, RotateCw, FileText, Download, CheckCircle, Settings2, ChevronUp, ChevronDown, HelpCircle, Info, X };
 
 // Initialize Lucide icons
 createIcons({
@@ -29,6 +31,8 @@ createIcons({
  * @property {PdfRenderer} pdfRenderer
  * @property {CropManager} cropManager
  * @property {UsbPrinter} usbPrinter
+ * @property {BluetoothPrinter} bluetoothPrinter
+ * @property {UsbPrinter|BluetoothPrinter|null} activePrinter
  * @property {number} currentPage
  * @property {number} rotation
  * @property {number} brightness
@@ -91,6 +95,8 @@ const state = {
   pdfRenderer: new PdfRenderer(),
   cropManager: new CropManager(),
   usbPrinter: new UsbPrinter(),
+  bluetoothPrinter: new BluetoothPrinter(),
+  activePrinter: null,
   currentPage: 1,
   rotation: 0,
   brightness: 0,
@@ -159,9 +165,16 @@ const els = {
 };
 
 // Check Browser Support
-if (!navigator.usb) {
+if (!navigator.usb && !navigator.bluetooth) {
+  els.browserWarning.innerHTML = 'Browser Anda tidak mendukung pencetakan langsung (WebUSB/WebBluetooth). Gunakan Chrome atau Edge.';
   els.browserWarning.hidden = false;
   els.connectBtn.disabled = true;
+} else if (!navigator.usb) {
+  els.browserWarning.innerHTML = 'Browser Anda tidak mendukung WebUSB. Pencetakan hanya tersedia via Bluetooth.';
+  els.browserWarning.hidden = false;
+} else if (!navigator.bluetooth) {
+  els.browserWarning.innerHTML = 'Browser Anda tidak mendukung WebBluetooth. Pencetakan hanya tersedia via USB.';
+  els.browserWarning.hidden = false;
 }
 
 // --- Modal Logic ---
@@ -390,15 +403,54 @@ function updateBarcodePreview() {
 }
 
 els.connectBtn.addEventListener('click', async () => {
-  try {
-    const name = await state.usbPrinter.connect();
-    els.printerStatusDot.classList.add('connected');
-    els.printerStatusText.textContent = `Terhubung: ${name}`;
-    els.connectBtn.textContent = 'Ganti Printer';
-  } catch (err) {
-    console.error('Printer Connection Failed:', err);
-    Toast.error('Tidak dapat terhubung ke printer. Pastikan printer menyala dan Anda telah memilihnya di dialog.', 'Error Koneksi');
+  openModal('Pilih Jenis Printer', 'printer-select-template');
+  
+  const usbBtn = document.getElementById('select-usb');
+  const btBtn = document.getElementById('select-bluetooth');
+
+  if (usbBtn) {
+    if (!navigator.usb) {
+      usbBtn.disabled = true;
+      usbBtn.title = 'WebUSB tidak didukung di browser ini';
+    }
+    usbBtn.onclick = async () => {
+      try {
+        const name = await state.usbPrinter.connect();
+        state.activePrinter = state.usbPrinter;
+        els.printerStatusDot.classList.add('connected');
+        els.printerStatusText.textContent = `Terhubung: ${name} (USB)`;
+        els.connectBtn.innerHTML = `<i data-lucide="usb"></i> <span class="btn-text">Ganti Printer</span>`;
+        els.modalOverlay.hidden = true;
+        createIcons({ icons: lucideIcons });
+      } catch (err) {
+        console.error('USB Connection Failed:', err);
+        Toast.error('Gagal terhubung ke USB printer.', 'Error Koneksi');
+      }
+    };
   }
+
+  if (btBtn) {
+    if (!navigator.bluetooth) {
+      btBtn.disabled = true;
+      btBtn.title = 'WebBluetooth tidak didukung di browser ini';
+    }
+    btBtn.onclick = async () => {
+      try {
+        const name = await state.bluetoothPrinter.connect();
+        state.activePrinter = state.bluetoothPrinter;
+        els.printerStatusDot.classList.add('connected');
+        els.printerStatusText.textContent = `Terhubung: ${name} (BT)`;
+        els.connectBtn.innerHTML = `<i data-lucide="bluetooth"></i> <span class="btn-text">Ganti Printer</span>`;
+        els.modalOverlay.hidden = true;
+        createIcons({ icons: lucideIcons });
+      } catch (err) {
+        console.error('Bluetooth Connection Failed:', err);
+        Toast.error('Gagal terhubung ke Bluetooth printer.', 'Error Koneksi');
+      }
+    };
+  }
+  
+  createIcons({ icons: lucideIcons });
 });
 
 els.printCurrentBtn.addEventListener('click', () => {

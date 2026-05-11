@@ -208,11 +208,12 @@
         <div class="content-text">
             <h3>Cara Menggunakan ResiSnap</h3>
             <ol>
+                <li><strong>Hubungkan Printer:</strong> Klik "Hubungkan Printer" dan pilih antara <strong>USB</strong> (kabel) atau <strong>Bluetooth</strong> (wireless).</li>
                 <li><strong>Unggah PDF:</strong> Klik tombol "Unggah PDF" atau seret file PDF resi Anda ke area kotak.</li>
                 <li><strong>Sesuaikan:</strong> Gunakan fitur *crop* untuk memilih area resi yang ingin dicetak.</li>
-                <li><strong>Optimasi Barcode:</strong> ResiSnap akan mendeteksi barcode secara otomatis. Anda bisa mengaktifkan "Buat Ulang" untuk hasil cetak barcode yang lebih tajam.</li>
-                <li><strong>Atur Kualitas:</strong> Gunakan slider Kecerahan dan Kontras jika hasil cetak terlalu pudar atau terlalu gelap.</li>
-                <li><strong>Cetak:</strong> Pastikan printer thermal Anda terhubung via USB, lalu klik "Cetak".</li>
+                <li><strong>Optimasi Barcode:</strong> ResiSnap akan mendeteksi barcode otomatis. Anda bisa aktifkan "Buat Ulang" untuk hasil cetak yang lebih tajam.</li>
+                <li><strong>Atur Kualitas:</strong> Gunakan slider Kecerahan dan Kontras jika hasil cetak terlalu pudar atau gelap.</li>
+                <li><strong>Cetak:</strong> Klik tombol "Cetak" untuk mengirim data ke printer yang sudah terhubung.</li>
             </ol>
         </div>
     </template>
@@ -240,6 +241,25 @@
                 <li><strong>Open Source:</strong> ResiSnap adalah proyek open-source. Anda diizinkan untuk melihat, memodifikasi, dan berkontribusi pada kode sumber melalui GitHub.</li>
                 <li><strong>Kepatuhan:</strong> Pastikan Anda menggunakan alat ini sesuai dengan kebijakan marketplace masing-masing (Shopee, Tokopedia, dll).</li>
             </ul>
+        </div>
+    </template>
+
+    <template id="printer-select-template">
+        <div class="printer-select-options">
+            <button id="select-usb" class="printer-option-btn">
+                <i data-lucide="usb"></i>
+                <div class="option-text">
+                    <span class="option-title">USB Printer</span>
+                    <span class="option-desc">Stabil & cepat untuk desktop dan Android</span>
+                </div>
+            </button>
+            <button id="select-bluetooth" class="printer-option-btn">
+                <i data-lucide="bluetooth"></i>
+                <div class="option-text">
+                    <span class="option-title">Bluetooth Printer</span>
+                    <span class="option-desc">Praktis tanpa kabel untuk perangkat Android</span>
+                </div>
+            </button>
         </div>
     </template>
 
