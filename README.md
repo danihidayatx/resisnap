@@ -55,7 +55,30 @@ This project utilizes Vite, making local setup straightforward.
    ```bash
    npm run build
    ```
-   The production build will be generated in the `dist/` directory, ready to be deployed to static hosting services such as GitHub Pages, Cloudflare Pages, or Vercel.
+   The production build will be generated in the `dist/` directory, ready to be deployed to static hosting services.
+
+## Deployment
+
+### Cloudflare Pages (Recommended)
+The easiest way to deploy ResiSnap is via Cloudflare Pages:
+1. Connect your GitHub repository to Cloudflare.
+2. Set the **Build command** to `npm run build`.
+3. Set the **Build output directory** to `dist`.
+
+Alternatively, use the Wrangler CLI:
+```bash
+npm run build
+npx wrangler pages deploy dist --project-name resisnap
+```
+
+### Cloudflare Workers
+To deploy using the Cloudflare Workers Assets feature:
+```bash
+npm run build
+npx wrangler deploy
+```
+*Note: This requires the `wrangler.toml` file included in the repository.*
+
 
 ## Usage Guide
 
